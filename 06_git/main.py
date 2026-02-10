@@ -4,7 +4,7 @@ Lee un array desde `input.txt`, lo ordena usando quicksort y opcionalmente muest
 de ejecución y la pila de llamadas.
 
 Formato de `input.txt`: números enteros separados por espacios, comas o saltos de línea.
-Ejemplo: 8 3 1 7 0 10 2 5
+Ejemplo: [8 3 1 7 0 10 2 5]
 """
 import argparse
 import os
