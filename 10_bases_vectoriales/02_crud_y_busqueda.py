@@ -1,5 +1,8 @@
 """Ejemplo 2: operaciones CRUD basicas y busqueda semantica."""
 
+from chromadb.api.types import Document
+
+
 import chromadb
 
 
@@ -23,9 +26,11 @@ def main() -> None:
             "Python es un lenguaje de programacion",
             "Machine learning usa algoritmos para aprender",
             "Las bases de datos almacenan informacion",
+            "El AGI es el intelecto artificial general",
+            "C++ es un lenguaje rapido y eficiente"
         ],
-        metadatas=[{"tipo": "prog"}, {"tipo": "ia"}, {"tipo": "db"}],
-        ids=["doc1", "doc2", "doc3"],
+        metadatas=[{"tipo": "prog"}, {"tipo": "ia"}, {"tipo": "db"}, {"tipo": "ai"}, {"tipo": "prog"}],
+        ids=["doc1", "doc2", "doc3", "doc4", "doc5"],
     )
 
     print(f"Documentos cargados: {collection.count()}")
@@ -35,7 +40,7 @@ def main() -> None:
         n_results=2,
     )
     print("\nTop 2 para 'inteligencia artificial':")
-    for i, doc in enumerate(resultados["documents"][0], start=1):
+    for i, doc in enumerate[Document](resultados["documents"][0], start=1):
         print(f"{i}. {doc}")
 
     resultados_filtrados = collection.query(
