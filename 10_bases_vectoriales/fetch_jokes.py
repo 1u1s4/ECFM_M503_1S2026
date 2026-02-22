@@ -48,7 +48,7 @@ def main(n: int = 100) -> None:
                 seen_texts.add(text)
                 jokes.append(data)
                 print(f"  [{len(jokes)}/{n}] OK")
-        time.sleep(0.5)  # Evitar rate limiting
+        #time.sleep(0.5)  # Evitar rate limiting
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(jokes, f, ensure_ascii=False, indent=2)
@@ -57,4 +57,8 @@ def main(n: int = 100) -> None:
 
 
 if __name__ == "__main__":
-    main(n=100)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", type=int, default=100, help="Cantidad de chistes a obtener")
+    args = parser.parse_args()
+    main(n=args.n)

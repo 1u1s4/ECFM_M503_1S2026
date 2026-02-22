@@ -22,8 +22,8 @@ def main() -> None:
         print(f"Error: Coleccion '{COLLECTION_NAME}' no encontrada. Ejecuta ingest_jokes.py")
         return
 
-    query = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "programador"
-    n_results = 5
+    query = "numerico"
+    n_results = 1
 
     resultados = collection.query(
         query_texts=[query],
