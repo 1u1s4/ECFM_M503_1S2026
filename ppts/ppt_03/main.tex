@@ -1,0 +1,754 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{xcolor}
+
+%--- Configuración de Listings para Python ---
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=Python,
+    morekeywords={self, True, False, None, class, def, return, if, else, elif, for, while, in, and, or, not, lambda, try, except, finally, raise, with, as, from, import, pass, break, continue, global, nonlocal, assert, yield, del, is, async, await}
+}
+\lstset{style=pythonstyle}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 3]{Programación Matemática 2}
+\subtitle{Clase 3: Paradigma Orientado a Objetos}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: INTRODUCCIÓN
+%===========================================================
+\section{Introducción a la Programación Orientada a Objetos}
+
+\begin{frame}{¿Qué es la Programación Orientada a Objetos?}
+    \begin{block}{Definición}
+        La \textbf{Programación Orientada a Objetos (POO)} es un paradigma que organiza el software como una colección de \textbf{objetos} que contienen datos y comportamiento.
+    \end{block}
+    \vspace{0.5cm}
+    
+    \begin{alertblock}{Filosofía}
+        \textbf{``Se modela el mundo real mediante entidades que tienen características (atributos) y pueden realizar acciones (métodos).''}
+    \end{alertblock}
+    \vspace{0.3cm}
+    
+    \textbf{Analogía:} Un automóvil tiene características (color, marca, modelo) y puede realizar acciones (acelerar, frenar, girar).
+\end{frame}
+
+\begin{frame}{Los Cuatro Pilares de la POO}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{1. Encapsulamiento}
+            Se ocultan los detalles internos y se expone solo lo necesario.
+        \end{block}
+        \vspace{0.3cm}
+        \begin{block}{2. Abstracción}
+            Se simplifica la complejidad mostrando solo las características esenciales.
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{3. Herencia}
+            Se crean nuevas clases basadas en clases existentes.
+        \end{block}
+        \vspace{0.3cm}
+        \begin{block}{4. Polimorfismo}
+            Se permite que objetos de diferentes clases respondan al mismo mensaje.
+        \end{block}
+    \end{columns}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: CLASES Y OBJETOS
+%===========================================================
+\section{Clases y Objetos}
+
+\begin{frame}{Clases y Objetos: Conceptos Fundamentales}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \begin{exampleblock}{Clase}
+            Es el \textbf{molde} o \textbf{plantilla} que define:
+            \begin{itemize}
+                \item Atributos (datos)
+                \item Métodos (comportamiento)
+            \end{itemize}
+        \end{exampleblock}
+        
+        \column{0.5\textwidth}
+        \begin{alertblock}{Objeto}
+            Es una \textbf{instancia} de una clase:
+            \begin{itemize}
+                \item Entidad concreta en memoria
+                \item Posee valores específicos
+            \end{itemize}
+        \end{alertblock}
+    \end{columns}
+    
+    \vspace{0.5cm}
+    \centering
+    \begin{tikzpicture}
+        \node[draw, rectangle, fill=blue!20, minimum width=2.5cm, minimum height=1cm] (clase) {Clase: Perro};
+        \node[draw, rectangle, fill=green!20, minimum width=2cm, minimum height=0.8cm, right=1cm of clase] (obj1) {firulais};
+        \node[draw, rectangle, fill=green!20, minimum width=2cm, minimum height=0.8cm, right=0.5cm of obj1] (obj2) {max};
+        \node[draw, rectangle, fill=green!20, minimum width=2cm, minimum height=0.8cm, right=0.5cm of obj2] (obj3) {luna};
+        \draw[->, thick] (clase) -- (obj1);
+        \draw[->, thick] (clase) -- (obj2);
+        \draw[->, thick] (clase) -- (obj3);
+        \node[below=0.1cm of clase] {\scriptsize Plantilla};
+        \node[below=0.1cm of obj2] {\scriptsize Instancias (Objetos)};
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{Definición de una Clase en Python}
+    \begin{lstlisting}[title=Sintaxis Básica de una Clase]
+class Persona:
+    """Clase que representa a una persona."""
+    
+    # Constructor: se ejecuta al crear un objeto
+    def __init__(self, nombre, edad):
+        # Atributos de instancia
+        self.nombre = nombre
+        self.edad = edad
+    
+    # Metodo de instancia
+    def saludar(self):
+        return f"Hola, mi nombre es {self.nombre}"
+    
+    # Metodo de instancia
+    def es_mayor_de_edad(self):
+        return self.edad >= 18
+    \end{lstlisting}
+    
+    \textbf{Nótese:} \texttt{self} hace referencia al objeto actual (instancia).
+\end{frame}
+
+\begin{frame}[fragile]{Creación y Uso de Objetos}
+    \begin{lstlisting}[title=Instanciación de Objetos]
+# Se crean objetos (instancias) de la clase Persona
+persona1 = Persona("Ana", 25)
+persona2 = Persona("Carlos", 17)
+
+# Se accede a los atributos
+print(persona1.nombre)  # Ana
+print(persona2.edad)    # 17
+
+# Se invocan los metodos
+print(persona1.saludar())           # Hola, mi nombre es Ana
+print(persona1.es_mayor_de_edad())  # True
+print(persona2.es_mayor_de_edad())  # False
+
+# Cada objeto tiene su propio estado
+persona1.edad = 26  # Se modifica solo persona1
+print(persona1.edad)  # 26
+print(persona2.edad)  # 17 (sin cambios)
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Atributos de Clase vs Atributos de Instancia}
+    \begin{lstlisting}[title=Tipos de Atributos]
+class Estudiante:
+    # Atributo de CLASE (compartido por todas las instancias)
+    universidad = "USAC"
+    contador = 0
+    
+    def __init__(self, nombre, carnet):
+        # Atributos de INSTANCIA (unicos por objeto)
+        self.nombre = nombre
+        self.carnet = carnet
+        Estudiante.contador += 1  # Se incrementa el contador
+
+# Se crean instancias
+est1 = Estudiante("Maria", "202012345")
+est2 = Estudiante("Pedro", "202054321")
+
+print(est1.universidad)      # USAC (atributo de clase)
+print(est2.universidad)      # USAC (mismo valor)
+print(Estudiante.contador)   # 2 (compartido)
+    \end{lstlisting}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: ENCAPSULAMIENTO
+%===========================================================
+\section{Encapsulamiento}
+
+\begin{frame}{Encapsulamiento: Concepto}
+    \begin{block}{Definición}
+        El \textbf{encapsulamiento} consiste en ocultar los detalles internos de un objeto y exponer solo una interfaz pública controlada.
+    \end{block}
+    \vspace{0.5cm}
+    
+    \textbf{Convenciones en Python:}
+    \begin{itemize}
+        \item \texttt{atributo} — Público (accesible desde cualquier lugar)
+        \item \texttt{\_atributo} — Protegido (convención: uso interno)
+        \item \texttt{\_\_atributo} — Privado (name mangling)
+    \end{itemize}
+    \vspace{0.3cm}
+    
+    \textbf{Beneficios:}
+    \begin{itemize}
+        \item Se protege la integridad de los datos.
+        \item Se reduce el acoplamiento entre componentes.
+        \item Se facilita el mantenimiento del código.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo de Encapsulamiento}
+    \begin{lstlisting}[title=Atributos Privados y Métodos de Acceso]
+class CuentaBancaria:
+    def __init__(self, titular, saldo_inicial):
+        self.titular = titular
+        self.__saldo = saldo_inicial  # Atributo privado
+    
+    # Getter: permite leer el saldo
+    def obtener_saldo(self):
+        return self.__saldo
+    
+    # Metodos que controlan el acceso al saldo
+    def depositar(self, monto):
+        if monto > 0:
+            self.__saldo += monto
+            return True
+        return False
+    
+    def retirar(self, monto):
+        if 0 < monto <= self.__saldo:
+            self.__saldo -= monto
+            return True
+        return False
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Uso del Encapsulamiento}
+    \begin{lstlisting}[title=Protección de Datos]
+cuenta = CuentaBancaria("Juan Perez", 1000)
+
+# Acceso controlado mediante metodos
+print(cuenta.obtener_saldo())  # 1000
+cuenta.depositar(500)
+print(cuenta.obtener_saldo())  # 1500
+
+cuenta.retirar(200)
+print(cuenta.obtener_saldo())  # 1300
+
+# Intento de acceso directo (falla)
+# print(cuenta.__saldo)  # AttributeError
+
+# El saldo no puede ser negativo gracias al encapsulamiento
+cuenta.retirar(5000)  # Retorna False, no se ejecuta
+print(cuenta.obtener_saldo())  # 1300 (sin cambios)
+    \end{lstlisting}
+    
+    \textbf{Nótese:} La lógica de negocio se protege dentro de la clase.
+\end{frame}
+
+\begin{frame}[fragile]{Properties: Encapsulamiento Pythónico}
+    \begin{lstlisting}[title=Uso de @property]
+class Rectangulo:
+    def __init__(self, ancho, alto):
+        self._ancho = ancho
+        self._alto = alto
+    
+    @property
+    def area(self):
+        """Se calcula automaticamente (solo lectura)."""
+        return self._ancho * self._alto
+    
+    @property
+    def ancho(self):
+        return self._ancho
+    
+    @ancho.setter
+    def ancho(self, valor):
+        if valor > 0:
+            self._ancho = valor
+        else:
+            raise ValueError("El ancho debe ser positivo")
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Uso de Properties}
+    \begin{lstlisting}[title=Acceso Transparente]
+rect = Rectangulo(10, 5)
+
+# Se accede como atributo, pero ejecuta el metodo
+print(rect.area)   # 50
+print(rect.ancho)  # 10
+
+# Se usa el setter automaticamente
+rect.ancho = 20
+print(rect.area)   # 100
+
+# Validacion integrada
+# rect.ancho = -5  # ValueError: El ancho debe ser positivo
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Ventaja:} Se mantiene la sintaxis simple de atributos con la protección de métodos.
+\end{frame}
+
+%===========================================================
+% SECCIÓN 4: HERENCIA
+%===========================================================
+\section{Herencia}
+
+\begin{frame}{Herencia: Concepto}
+    \begin{block}{Definición}
+        La \textbf{herencia} permite crear nuevas clases (hijas) que reutilizan, extienden o modifican el comportamiento de clases existentes (padres).
+    \end{block}
+    \vspace{0.3cm}
+    
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm]
+        \node[draw, rectangle, fill=blue!20, minimum width=3cm, minimum height=1cm] (animal) {Animal};
+        \node[draw, rectangle, fill=green!20, minimum width=2.5cm, minimum height=0.8cm, below left=1cm and 0.5cm of animal] (perro) {Perro};
+        \node[draw, rectangle, fill=green!20, minimum width=2.5cm, minimum height=0.8cm, below right=1cm and 0.5cm of animal] (gato) {Gato};
+        \draw[->, thick] (perro) -- (animal);
+        \draw[->, thick] (gato) -- (animal);
+        \node[right=0.3cm of animal] {\scriptsize Clase Padre (Base)};
+        \node[left=0.3cm of perro] {\scriptsize Clases Hijas};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \textbf{Relación:} ``Es un'' (un Perro \textit{es un} Animal)
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo de Herencia}
+    \begin{lstlisting}[title=Clase Base]
+class Animal:
+    def __init__(self, nombre, edad):
+        self.nombre = nombre
+        self.edad = edad
+    
+    def presentarse(self):
+        return f"Soy {self.nombre} y tengo {self.edad} anios"
+    
+    def hacer_sonido(self):
+        return "..."  # Sonido generico
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Clases Derivadas}
+    \begin{lstlisting}[title=Clases Hijas que Heredan de Animal]
+class Perro(Animal):  # Hereda de Animal
+    def __init__(self, nombre, edad, raza):
+        super().__init__(nombre, edad)  # Llama al constructor padre
+        self.raza = raza
+    
+    def hacer_sonido(self):  # Sobreescribe el metodo
+        return "Guau guau!"
+    
+    def traer_pelota(self):  # Metodo exclusivo de Perro
+        return f"{self.nombre} trae la pelota"
+
+class Gato(Animal):
+    def __init__(self, nombre, edad, color):
+        super().__init__(nombre, edad)
+        self.color = color
+    
+    def hacer_sonido(self):
+        return "Miau!"
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Uso de la Herencia}
+    \begin{lstlisting}[title=Instanciación y Uso]
+# Se crean instancias de las clases hijas
+perro = Perro("Firulais", 3, "Labrador")
+gato = Gato("Michi", 2, "Naranja")
+
+# Metodos heredados
+print(perro.presentarse())  # Soy Firulais y tengo 3 anios
+print(gato.presentarse())   # Soy Michi y tengo 2 anios
+
+# Metodos sobreescritos
+print(perro.hacer_sonido())  # Guau guau!
+print(gato.hacer_sonido())   # Miau!
+
+# Metodo exclusivo
+print(perro.traer_pelota())  # Firulais trae la pelota
+
+# Verificacion de herencia
+print(isinstance(perro, Animal))  # True
+print(isinstance(perro, Perro))   # True
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Herencia Múltiple}
+    \begin{lstlisting}[title=Una Clase Puede Heredar de Múltiples Padres]
+class Volador:
+    def volar(self):
+        return "Estoy volando"
+
+class Nadador:
+    def nadar(self):
+        return "Estoy nadando"
+
+class Pato(Animal, Volador, Nadador):
+    def hacer_sonido(self):
+        return "Cuac cuac!"
+
+# El pato hereda de todas las clases
+pato = Pato("Donald", 5)
+print(pato.presentarse())   # Heredado de Animal
+print(pato.volar())         # Heredado de Volador
+print(pato.nadar())         # Heredado de Nadador
+print(pato.hacer_sonido())  # Sobreescrito en Pato
+    \end{lstlisting}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 5: POLIMORFISMO
+%===========================================================
+\section{Polimorfismo}
+
+\begin{frame}{Polimorfismo: Concepto}
+    \begin{block}{Definición}
+        El \textbf{polimorfismo} permite que objetos de diferentes clases respondan al mismo mensaje (método) de formas distintas.
+    \end{block}
+    \vspace{0.3cm}
+    
+    \textbf{Del griego:} \textit{poly} (muchas) + \textit{morphe} (formas)
+    \vspace{0.5cm}
+    
+    \textbf{Tipos en Python:}
+    \begin{itemize}
+        \item \textbf{Polimorfismo de subtipo:} Clases hijas redefinen métodos de la clase padre.
+        \item \textbf{Duck Typing:} ``Si camina como pato y hace cuac como pato, entonces es un pato.''
+    \end{itemize}
+    \vspace{0.3cm}
+    
+    \textbf{Beneficio:} Se puede escribir código genérico que funciona con múltiples tipos.
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo de Polimorfismo}
+    \begin{lstlisting}[title=Polimorfismo con Herencia]
+def hacer_hablar(animal):
+    """Funcion que funciona con cualquier Animal."""
+    print(f"{animal.nombre} dice: {animal.hacer_sonido()}")
+
+# Se crean diferentes tipos de animales
+animales = [
+    Perro("Rex", 4, "Pastor Aleman"),
+    Gato("Luna", 2, "Blanco"),
+    Pato("Lucas", 1)
+]
+
+# La misma funcion funciona con todos
+for animal in animales:
+    hacer_hablar(animal)
+
+# Salida:
+# Rex dice: Guau guau!
+# Luna dice: Miau!
+# Lucas dice: Cuac cuac!
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Duck Typing en Python}
+    \begin{lstlisting}[title=No Importa el Tipo, Importa el Comportamiento]
+class Coche:
+    def __init__(self, marca):
+        self.marca = marca
+    
+    def mover(self):
+        return f"El coche {self.marca} avanza por la carretera"
+
+class Avion:
+    def __init__(self, modelo):
+        self.modelo = modelo
+    
+    def mover(self):
+        return f"El avion {self.modelo} vuela por el cielo"
+
+# Funcion generica que no verifica tipos
+def iniciar_viaje(vehiculo):
+    print(vehiculo.mover())
+
+iniciar_viaje(Coche("Toyota"))  # El coche Toyota avanza...
+iniciar_viaje(Avion("Boeing"))  # El avion Boeing vuela...
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Métodos Especiales (Dunder Methods)}
+    \begin{lstlisting}[title=Polimorfismo con Operadores]
+class Vector:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+    
+    def __add__(self, otro):  # Define el operador +
+        return Vector(self.x + otro.x, self.y + otro.y)
+    
+    def __str__(self):  # Define como se imprime
+        return f"Vector({self.x}, {self.y})"
+    
+    def __eq__(self, otro):  # Define el operador ==
+        return self.x == otro.x and self.y == otro.y
+
+v1 = Vector(1, 2)
+v2 = Vector(3, 4)
+v3 = v1 + v2  # Usa __add__
+print(v3)     # Vector(4, 6) - Usa __str__
+    \end{lstlisting}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 6: ABSTRACCIÓN
+%===========================================================
+\section{Abstracción}
+
+\begin{frame}{Abstracción: Concepto}
+    \begin{block}{Definición}
+        La \textbf{abstracción} consiste en definir una interfaz común sin implementar los detalles, obligando a las clases hijas a proporcionar la implementación.
+    \end{block}
+    \vspace{0.5cm}
+    
+    \textbf{Clases Abstractas:}
+    \begin{itemize}
+        \item No se pueden instanciar directamente.
+        \item Definen métodos que \textbf{deben} ser implementados por las subclases.
+        \item Se utiliza el módulo \texttt{abc} (Abstract Base Classes).
+    \end{itemize}
+    \vspace{0.3cm}
+    
+    \textbf{Propósito:} Establecer un ``contrato'' que las clases hijas deben cumplir.
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo de Clase Abstracta}
+    \begin{lstlisting}[title=Definición de Clase Abstracta]
+from abc import ABC, abstractmethod
+
+class Figura(ABC):  # Hereda de ABC (Abstract Base Class)
+    
+    @abstractmethod
+    def area(self):
+        """Todas las figuras deben calcular su area."""
+        pass
+    
+    @abstractmethod
+    def perimetro(self):
+        """Todas las figuras deben calcular su perimetro."""
+        pass
+    
+    def descripcion(self):
+        """Metodo concreto (con implementacion)."""
+        return f"Area: {self.area()}, Perimetro: {self.perimetro()}"
+    \end{lstlisting}
+    
+    \textbf{Nótese:} No se puede crear una instancia de \texttt{Figura} directamente.
+\end{frame}
+
+\begin{frame}[fragile]{Implementación de Clases Concretas}
+    \begin{lstlisting}[title=Clases que Implementan la Abstracción]
+class Circulo(Figura):
+    def __init__(self, radio):
+        self.radio = radio
+    
+    def area(self):
+        return 3.14159 * self.radio ** 2
+    
+    def perimetro(self):
+        return 2 * 3.14159 * self.radio
+
+class Rectangulo(Figura):
+    def __init__(self, ancho, alto):
+        self.ancho = ancho
+        self.alto = alto
+    
+    def area(self):
+        return self.ancho * self.alto
+    
+    def perimetro(self):
+        return 2 * (self.ancho + self.alto)
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Uso de la Abstracción}
+    \begin{lstlisting}[title=Polimorfismo con Clases Abstractas]
+# figura = Figura()  # TypeError: Can't instantiate abstract class
+
+figuras = [
+    Circulo(5),
+    Rectangulo(4, 6),
+    Circulo(3)
+]
+
+for figura in figuras:
+    print(figura.descripcion())
+
+# Salida:
+# Area: 78.53975, Perimetro: 31.4159
+# Area: 24, Perimetro: 20
+# Area: 28.27431, Perimetro: 18.84954
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Ventaja:} Se garantiza que todas las figuras tengan \texttt{area()} y \texttt{perimetro()}.
+\end{frame}
+
+%===========================================================
+% SECCIÓN 7: COMPARACIÓN DE PARADIGMAS
+%===========================================================
+\section{Comparación de Paradigmas}
+
+\begin{frame}{Imperativo vs Funcional vs POO}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{2.5cm} p{3.5cm} p{3.5cm} p{4cm}}
+            \toprule
+            \textbf{Aspecto} & \textbf{Imperativo} & \textbf{Funcional} & \textbf{POO} \\
+            \midrule
+            Unidad básica & Instrucción & Función & Objeto \\
+            Estado & Mutable & Inmutable & Encapsulado en objetos \\
+            Enfoque & Cómo hacerlo & Qué resultado & Modelar entidades \\
+            Reutilización & Funciones/procedimientos & Composición & Herencia/composición \\
+            Ideal para & Scripts, algoritmos & Transformación de datos & Sistemas complejos \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.5cm}
+    \centering
+    \textbf{Python permite combinar los tres paradigmas según las necesidades del problema.}
+\end{frame}
+
+\begin{frame}[fragile]{Un Problema, Tres Enfoques}
+    \textbf{Problema:} Calcular el área total de una lista de rectángulos.
+    
+    \begin{columns}
+        \column{0.32\textwidth}
+        \begin{lstlisting}[title=Imperativo,basicstyle=\ttfamily\tiny]
+rectangulos = [
+  (4, 5), (3, 7), (2, 8)
+]
+total = 0
+for r in rectangulos:
+    area = r[0] * r[1]
+    total += area
+print(total)  # 55
+        \end{lstlisting}
+        
+        \column{0.32\textwidth}
+        \begin{lstlisting}[title=Funcional,basicstyle=\ttfamily\tiny]
+rectangulos = [
+  (4, 5), (3, 7), (2, 8)
+]
+total = sum(
+    map(
+      lambda r: r[0]*r[1],
+      rectangulos
+    )
+)
+print(total)  # 55
+        \end{lstlisting}
+        
+        \column{0.36\textwidth}
+        \begin{lstlisting}[title=POO,basicstyle=\ttfamily\tiny]
+class Rect:
+  def __init__(self, a, h):
+    self.ancho = a
+    self.alto = h
+  def area(self):
+    return self.ancho*self.alto
+
+rects = [Rect(4,5),
+         Rect(3,7),
+         Rect(2,8)]
+total = sum(r.area() 
+            for r in rects)
+print(total)  # 55
+        \end{lstlisting}
+    \end{columns}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 8: EJERCICIOS
+%===========================================================
+\section{Ejercicios Propuestos}
+
+\begin{frame}{Ejercicios para Practicar}
+    \begin{enumerate}
+        \setlength\itemsep{0.7em}
+        \item Crear una clase \texttt{Libro} con atributos (título, autor, páginas) y un método que indique si es un libro largo ($>$ 300 páginas).
+        
+        \item Implementar una clase \texttt{CuentaAhorro} que herede de \texttt{CuentaBancaria} y agregue un método para calcular intereses.
+        
+        \item Crear una jerarquía de clases para un sistema de empleados: \texttt{Empleado} (base), \texttt{Gerente} y \texttt{Desarrollador} (hijas), cada una con su método \texttt{calcular\_salario()}.
+        
+        \item Implementar las clases \texttt{Triangulo} y \texttt{Cuadrado} que hereden de la clase abstracta \texttt{Figura}.
+        
+        \item \textbf{(Bonus)} Crear una clase \texttt{Fraccion} con métodos especiales para sumar, restar, multiplicar y comparar fracciones usando los operadores \texttt{+}, \texttt{-}, \texttt{*}, \texttt{==}.
+    \end{enumerate}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Próxima clase:} Introducción al Vibe Coding
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``La programación orientada a objetos ofrece una forma sostenible de escribir código espagueti.''} — Paul Graham
+\end{frame}
+
+\end{document}

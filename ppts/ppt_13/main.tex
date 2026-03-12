@@ -1,0 +1,180 @@
+\documentclass[aspectratio=169]{beamer}
+
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Líneas y Proyectos]{Programación Matemática 2}
+\subtitle{Líneas de Desarrollo, Especialización y Proyectos del Curso}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: FILOSOFÍA Y METODOLOGÍA
+%===========================================================
+\section{Filosofía de Aprendizaje: IA y Especialización}
+
+\begin{frame}{El Enfoque del Curso: Vibe Coding y Especialización}
+    \begin{block}{El Paradigma Moderno}
+        Ya no se trata solo de memorizar sintaxis, sino de tener los \textbf{fundamentos teóricos sólidos} para poder orquestar y guiar a las herramientas de Inteligencia Artificial en la resolución de problemas complejos.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{¿Cómo trabajaremos?}
+    \begin{itemize}
+        \item \textbf{Selección de Línea:} Elegirán 1 de las 5 líneas de especialización disponibles.
+        \item \textbf{Roadmap Personalizado:} Deberán tomar un par de cursos en línea (libres, a su elección) para adquirir los conocimientos base (suficientes y necesarios).
+        \item \textbf{Asistencia One-to-One:} Se ofrecerá asesoría personalizada para ayudarles a elegir el material y los cursos más adecuados para su ruta.
+        \item \textbf{Ejecución con IA:} Una vez obtenida la base teórica, utilizarán asistentes de IA (Cursor, Copilot, ChatGPT) para volverse versos en el tema y ejecutar sus proyectos.
+    \end{itemize}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: LÍNEAS DE DESARROLLO
+%===========================================================
+\section{Las 5 Líneas de Especialización}
+
+\begin{frame}{Línea 1: Ingeniería de Datos y Ecosistemas Modernos}
+    \textbf{Enfoque:} Arquitecturas Lakehouse, pipelines ETL/ELT, calidad de datos y procesamiento distribuido (SQL, PySpark).
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Ideas de Proyectos}
+        \begin{enumerate}
+            \item \textbf{Analítica de Movilidad Urbana:} Pipeline de streaming de datos para mapeo e incidencias de tráfico o sistemas de transporte público.
+            \item \textbf{Lakehouse Comercial:} Consolidación y limpieza automatizada de inventarios y datos de proveedores para una red de retail.
+            \item \textbf{Preparación para Fine-Tuning:} Motor automatizado para ingesta, limpieza y vectorización de documentos históricos para consumo de LLMs.
+        \end{enumerate}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Línea 2: Desarrollo Web Full-Stack Asistido por IA}
+    \textbf{Enfoque:} Construcción de plataformas robustas utilizando frameworks modernos (ej. Next.js, Prisma) y despliegue ágil.
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Ideas de Proyectos}
+        \begin{enumerate}
+            \item \textbf{Plataforma E-commerce Inteligente:} Tienda en línea (ej. para repostería o panadería) con generación dinámica de menús y descripciones visuales vía IA.
+            \item \textbf{Sistema de Gestión Documental:} Aplicación web para la compilación y seguimiento seguro de historiales y expedientes.
+            \item \textbf{Dashboard Interactivo de Modelos:} Interfaz web para consultar y visualizar en tiempo real predicciones matemáticas o estadísticas.
+        \end{enumerate}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Línea 3: Analítica Avanzada y Modelado Predictivo}
+    \textbf{Enfoque:} Uso de Python, manipulación profunda de DataFrames y algoritmos de Machine Learning para extraer valor.
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Ideas de Proyectos}
+        \begin{enumerate}
+            \item \textbf{Motor de Pronósticos Deportivos:} Modelo estadístico basado en datos históricos y métricas avanzadas (ej. xG) para calcular probabilidades.
+            \item \textbf{Sistema de Tasación Histórica:} Analítica para estimar fluctuaciones de valor en mercados de nicho (como el coleccionismo o la numismática).
+            \item \textbf{Optimización Logística:} Modelo para predecir demanda estacional y optimizar la distribución de recursos geográficamente.
+        \end{enumerate}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Línea 4: Ingeniería de IA, Agentes y Multimodalidad}
+    \textbf{Enfoque:} Arquitectura Transformer, flujos RAG, prompting avanzado y despliegue de agentes autónomos.
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Ideas de Proyectos}
+        \begin{enumerate}
+            \item \textbf{Orquestador de Agentes Locales:} Implementación de un modelo de IA liviano ejecutado en hardware embebido (ej. Raspberry Pi) para tareas de domótica o monitoreo.
+            \item \textbf{Tutor Asistente RAG:} Un sistema que ingeste todos los PDF y normativas de la USAC/ECFM para responder consultas estudiantiles con referencias exactas.
+            \item \textbf{Pipeline Multimodal Generativo:} Sistema que tome descripciones en texto y genere automáticamente variaciones de diseño, logotipos y paletas de colores.
+        \end{enumerate}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Línea 5: Programación Matemática y Alto Rendimiento}
+    \textbf{Enfoque:} Complejidad algorítmica, transpilación, asistentes de pruebas formales (Lean) y optimización pura.
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Ideas de Proyectos}
+        \begin{enumerate}
+            \item \textbf{Aceleración Asistida:} Migración y transpilación guiada por IA de un algoritmo matemático pesado de Python a un lenguaje compilado (C++ o Rust).
+            \item \textbf{Solucionador Numérico Masivo:} Implementación de metaheurísticas para resolver problemas NP-Hard, optimizando el uso de CPU/GPU.
+            \item \textbf{Validación Formal:} Modelado y demostración de teoremas del curso utilizando asistentes computacionales.
+        \end{enumerate}
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: PROYECTO GENERAL (PROJECT EULER)
+%===========================================================
+\section{El Proyecto Transversal: Reto Project Euler}
+
+\begin{frame}{El Gran Reto Computacional: Project Euler con IA}
+    \begin{block}{Dinámica General}
+        A lo largo del semestre, existirá un proyecto de carácter \textbf{competitivo y obligatorio}: Resolver la mayor cantidad de problemas posibles de \textit{Project Euler} haciendo uso intensivo de asistentes de Inteligencia Artificial.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \begin{columns}[t]
+        \column{0.45\textwidth}
+        \textbf{Premiación (Lugares):}
+        \begin{itemize}
+            \item \textbf{\color{orange!80!black}1er Lugar:} 100 pts
+            \item \textbf{\color{gray}2do Lugar:} 80 pts
+            \item \textbf{\color{brown}3er Lugar:} 60 pts
+        \end{itemize}
+        \textit{* Quienes no entren al Top 3 tendrán una calificación base según la cantidad de problemas resueltos y documentados.}
+
+        \column{0.55\textwidth}
+        \textbf{Reglas de Entrega (Estricto):}
+        \begin{itemize}
+            \item Entrega mediante un \textbf{Monorepo} (ej. GitHub).
+            \item Cada solución debe incluir el \textbf{link directo al chat} (ChatGPT, Claude, etc.) utilizado.
+            \item \textbf{Tolerancia Cero:} Si un problema no tiene su respectiva evidencia rastreable de que fue resuelto/asistido con IA, \textbf{no será calificado}.
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Tienen en mente su línea?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Siguiente paso:} Pensar en la ruta y agendar la asesoría 1-a-1.
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``El buen ingeniero no es el que memoriza la respuesta, sino el que sabe hacer la pregunta correcta.''}
+\end{frame}
+
+\end{document}

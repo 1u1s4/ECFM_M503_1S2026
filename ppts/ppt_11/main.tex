@@ -1,0 +1,1290 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{amsmath}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, decorations.pathreplacing, patterns}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 11]{Programación Matemática 2}
+\subtitle{Clase 11: Historia de la IA - Del Perceptrón a las Redes Neuronales}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: LOS ORÍGENES
+%===========================================================
+\section{Los Orígenes de la IA (1943-1956)}
+
+\begin{frame}{El Sueño de las Máquinas Pensantes}
+    \centering
+    \begin{tikzpicture}[scale=0.9]
+        % Timeline
+        \draw[thick, ->] (0,0) -- (12,0) node[right] {};
+        
+        % Events
+        \foreach \x/\year/\event in {
+            1/1943/Neurona de\\McCulloch-Pitts,
+            4/1950/Test de\\Turing,
+            7/1956/Conferencia\\de Dartmouth,
+            10/1958/Perceptrón
+        } {
+            \draw[thick] (\x,0.15) -- (\x,-0.15);
+            \node[below, font=\scriptsize] at (\x,-0.2) {\year};
+            \node[above, font=\tiny, text width=1.8cm, align=center] at (\x,0.3) {\event};
+        }
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{block}{La Gran Pregunta}
+        ``¿Pueden las máquinas pensar?'' - Alan Turing, 1950
+    \end{block}
+    
+    \vspace{0.3cm}
+    La IA nació de la intersección de matemáticas, neurociencia, filosofía y las primeras computadoras.
+\end{frame}
+
+\begin{frame}{McCulloch-Pitts: La Primera Neurona Artificial (1943)}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.9]
+            % Inputs
+            \node[circle, draw, fill=blue!20, minimum size=0.8cm] (x1) at (0,2) {$x_1$};
+            \node[circle, draw, fill=blue!20, minimum size=0.8cm] (x2) at (0,0) {$x_2$};
+            
+            % Neuron
+            \node[circle, draw, fill=yellow!30, minimum size=1.2cm] (n) at (3,1) {$\Sigma$};
+            
+            % Output
+            \node[circle, draw, fill=green!20, minimum size=0.8cm] (y) at (6,1) {$y$};
+            
+            % Connections
+            \draw[->, thick] (x1) -- node[above, font=\scriptsize] {$w_1$} (n);
+            \draw[->, thick] (x2) -- node[below, font=\scriptsize] {$w_2$} (n);
+            \draw[->, thick] (n) -- node[above, font=\scriptsize] {$f(\cdot)$} (y);
+            
+            % Threshold
+            \node[below=0.3cm of n, font=\scriptsize] {umbral $\theta$};
+        \end{tikzpicture}
+        
+        \column{0.5\textwidth}
+        \textbf{Modelo matemático:}
+        \[
+        y = f\left(\sum_{i} w_i x_i - \theta\right)
+        \]
+        
+        donde $f$ es una función escalón:
+        \[
+        f(z) = \begin{cases} 1 & \text{si } z \geq 0 \\ 0 & \text{si } z < 0 \end{cases}
+        \]
+        
+        \vspace{0.3cm}
+        \textbf{Limitación:} Los pesos eran fijos, no había aprendizaje.
+    \end{columns}
+\end{frame}
+
+\begin{frame}{La Conferencia de Dartmouth (1956)}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \begin{block}{El Nacimiento Oficial de la IA}
+            John McCarthy acuñó el término \textbf{``Artificial Intelligence''} para un taller de verano en Dartmouth College.
+        \end{block}
+        
+        \vspace{0.3cm}
+        \textbf{Participantes legendarios:}
+        \begin{itemize}
+            \item John McCarthy (LISP, término ``IA'')
+            \item Marvin Minsky (redes neuronales, MIT AI Lab)
+            \item Claude Shannon (teoría de la información)
+            \item Allen Newell \& Herbert Simon (GPS, Logic Theorist)
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \begin{alertblock}{La Propuesta (muy optimista)}
+            ``El estudio procederá sobre la base de la conjetura de que cada aspecto del aprendizaje o cualquier otra característica de la inteligencia puede, en principio, describirse con tal precisión que una máquina puede simularlo.''
+        \end{alertblock}
+        
+        \vspace{0.2cm}
+        \textit{Pensaban resolverlo en un verano...}
+    \end{columns}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: EL PERCEPTRÓN
+%===========================================================
+\section{El Perceptrón de Rosenblatt (1958)}
+
+\begin{frame}{Frank Rosenblatt y el Perceptrón}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{La Innovación Clave:}
+        \begin{itemize}
+            \item Primera red neuronal que \textbf{aprende}
+            \item Ajusta pesos automáticamente
+            \item Implementado en hardware (Mark I)
+            \item Financiado por la Marina de EE.UU.
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \begin{exampleblock}{New York Times, 1958}
+            ``La Marina reveló hoy el embrión de una computadora electrónica que espera poder caminar, hablar, ver, escribir, reproducirse y ser consciente de su existencia.''
+        \end{exampleblock}
+        
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.85]
+            % Input layer
+            \node[circle, draw, fill=blue!20, minimum size=0.7cm] (x1) at (0,3) {$x_1$};
+            \node[circle, draw, fill=blue!20, minimum size=0.7cm] (x2) at (0,2) {$x_2$};
+            \node[circle, draw, fill=blue!20, minimum size=0.7cm] (x3) at (0,1) {$x_3$};
+            \node[circle, draw, fill=gray!30, minimum size=0.7cm] (b) at (0,0) {$1$};
+            
+            % Output
+            \node[circle, draw, fill=green!30, minimum size=1cm] (y) at (3,1.5) {$y$};
+            
+            % Connections
+            \draw[->, thick] (x1) -- node[above, font=\tiny] {$w_1$} (y);
+            \draw[->, thick] (x2) -- node[above, font=\tiny] {$w_2$} (y);
+            \draw[->, thick] (x3) -- node[below, font=\tiny] {$w_3$} (y);
+            \draw[->, thick] (b) -- node[below, font=\tiny] {$b$} (y);
+            
+            % Labels
+            \node[left, font=\scriptsize] at (-0.5,2) {Entradas};
+            \node[below, font=\scriptsize] at (0,-0.5) {Bias};
+        \end{tikzpicture}
+        
+        \vspace{0.2cm}
+        $y = \text{sign}(w_1x_1 + w_2x_2 + w_3x_3 + b)$
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Algoritmo de Aprendizaje del Perceptrón}
+    \begin{columns}
+        \column{0.48\textwidth}
+        \begin{block}{Regla de Actualización}
+            Para cada ejemplo $(x, y_{true})$:
+            \begin{enumerate}
+                \item Calcular predicción: $\hat{y} = \text{sign}(\vec{w} \cdot \vec{x})$
+                \item Si $\hat{y} \neq y_{true}$:
+                \[
+                \vec{w}_{new} = \vec{w}_{old} + \eta \cdot y_{true} \cdot \vec{x}
+                \]
+            \end{enumerate}
+        \end{block}
+        
+        \vspace{0.2cm}
+        donde $\eta$ es la \textbf{tasa de aprendizaje}.
+        
+        \column{0.48\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.8]
+            % Axes
+            \draw[->] (0,0) -- (4,0) node[right] {$x_1$};
+            \draw[->] (0,0) -- (0,4) node[above] {$x_2$};
+            
+            % Points class 1
+            \fill[blue] (1,3) circle (3pt);
+            \fill[blue] (1.5,2.5) circle (3pt);
+            \fill[blue] (0.8,2.8) circle (3pt);
+            \fill[blue] (2,3.2) circle (3pt);
+            
+            % Points class 2
+            \fill[red] (3,1) circle (3pt);
+            \fill[red] (2.5,0.8) circle (3pt);
+            \fill[red] (3.2,1.5) circle (3pt);
+            \fill[red] (2.8,0.5) circle (3pt);
+            
+            % Decision boundary
+            \draw[thick, green!60!black] (0.5,3.5) -- (3.5,0.5);
+            
+            % Labels
+            \node[blue, font=\scriptsize] at (1,3.5) {Clase +1};
+            \node[red, font=\scriptsize] at (3,0.2) {Clase -1};
+            \node[green!60!black, font=\tiny, rotate=-45] at (2.5,2.5) {Frontera};
+        \end{tikzpicture}
+        
+        \vspace{0.2cm}
+        \scriptsize Clasificación lineal binaria
+    \end{columns}
+\end{frame}
+
+
+%===========================================================
+% SECCIÓN 3: EL PRIMER INVIERNO
+%===========================================================
+\section{El Primer Invierno de la IA (1969-1980)}
+
+\begin{frame}{Minsky y Papert: El Golpe Mortal (1969)}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \begin{alertblock}{``Perceptrons'' (1969)}
+            Marvin Minsky y Seymour Papert publicaron un análisis matemático riguroso demostrando las \textbf{limitaciones} del Perceptrón.
+        \end{alertblock}
+        
+        \vspace{0.3cm}
+        \textbf{Demostraron que el Perceptrón NO puede:}
+        \begin{itemize}
+            \item Resolver XOR
+            \item Detectar conectividad en grafos
+            \item Resolver problemas no lineales
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Implicación (exagerada):} Las redes neuronales son un callejón sin salida.
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.8]
+            % Funding graph
+            \draw[->] (0,0) -- (5,0) node[right, font=\scriptsize] {Año};
+            \draw[->] (0,0) -- (0,4) node[above, font=\scriptsize] {Fondos};
+            
+            % Funding curve
+            \draw[thick, blue] (0.5,3) -- (1.5,3.2) -- (2,2) -- (2.5,0.8) -- (4,0.5);
+            
+            % Event marker
+            \draw[dashed, red] (2,0) -- (2,4);
+            \node[red, font=\tiny, rotate=90] at (2.3,2) {Libro Minsky};
+            
+            % Labels
+            \node[font=\tiny] at (0.5,-0.3) {1965};
+            \node[font=\tiny] at (2,-0.3) {1969};
+            \node[font=\tiny] at (4,-0.3) {1975};
+        \end{tikzpicture}
+        
+        \vspace{0.2cm}
+        \scriptsize Colapso del financiamiento
+    \end{columns}
+\end{frame}
+
+\begin{frame}{El Invierno de la IA}
+    \begin{block}{Definición}
+        Un \textbf{AI Winter} es un período de reducción significativa en el financiamiento y el interés en la investigación de IA, generalmente después de expectativas infladas no cumplidas.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{Causas del Primer Invierno (1969-1980):}
+    \begin{itemize}
+        \item Libro de Minsky \& Papert
+        \item Promesas no cumplidas de traducción automática
+        \item Informe Lighthill (UK, 1973): ``La IA ha fallado''
+        \item Recortes masivos de DARPA y otros
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Lección}
+        El hype excesivo seguido de decepciones genera ciclos de boom-bust. Esto se repetiría en los 80s-90s.
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Mientras Tanto: Trabajo en las Sombras}
+    \textbf{Aunque el campo estaba ``muerto'', algunos investigadores persistieron:}
+    
+    \vspace{0.3cm}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Paul Werbos (1974)}
+            Inventó \textbf{backpropagation} en su tesis doctoral. Ignorado por una década.
+        \end{block}
+        
+        \begin{block}{Kunihiko Fukushima (1980)}
+            Creó el \textbf{Neocognitron}, precursor de las redes convolucionales.
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{John Hopfield (1982)}
+            Redes de Hopfield: memorias asociativas. Reconectó física con IA.
+        \end{block}
+        
+        \begin{block}{Hinton, Rumelhart, Williams}
+            Redescubrieron y popularizaron backpropagation (1986).
+        \end{block}
+    \end{columns}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 4: EL RESURGIMIENTO
+%===========================================================
+\section{El Resurgimiento: Backpropagation (1986)}
+
+\begin{frame}{La Solución al Problema XOR: Capas Ocultas}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        % Input layer
+        \node[circle, draw, fill=blue!20, minimum size=0.8cm] (x1) at (0,3) {$x_1$};
+        \node[circle, draw, fill=blue!20, minimum size=0.8cm] (x2) at (0,1) {$x_2$};
+        
+        % Hidden layer
+        \node[circle, draw, fill=yellow!30, minimum size=0.8cm] (h1) at (3,3.5) {$h_1$};
+        \node[circle, draw, fill=yellow!30, minimum size=0.8cm] (h2) at (3,2) {$h_2$};
+        \node[circle, draw, fill=yellow!30, minimum size=0.8cm] (h3) at (3,0.5) {$h_3$};
+        
+        % Output layer
+        \node[circle, draw, fill=green!30, minimum size=0.8cm] (y) at (6,2) {$y$};
+        
+        % Connections input -> hidden
+        \foreach \i in {1,2} {
+            \foreach \j in {1,2,3} {
+                \draw[->, gray] (x\i) -- (h\j);
+            }
+        }
+        
+        % Connections hidden -> output
+        \foreach \j in {1,2,3} {
+            \draw[->, gray] (h\j) -- (y);
+        }
+        
+        % Labels
+        \node[above, font=\scriptsize\bfseries] at (0,4) {Entrada};
+        \node[above, font=\scriptsize\bfseries] at (3,4.2) {Capa Oculta};
+        \node[above, font=\scriptsize\bfseries] at (6,3) {Salida};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{block}{Multi-Layer Perceptron (MLP)}
+        Al agregar \textbf{capas ocultas} con funciones de activación no lineales, la red puede aprender fronteras de decisión complejas, incluyendo XOR.
+    \end{block}
+\end{frame}
+
+\begin{frame}{El Problema: ¿Cómo Entrenar Capas Ocultas?}
+    \centering
+    \begin{tikzpicture}[scale=0.8]
+        % Network
+        \node[circle, draw, fill=blue!20] (x) at (0,2) {$x$};
+        \node[circle, draw, fill=yellow!30] (h) at (3,2) {$h$};
+        \node[circle, draw, fill=green!30] (y) at (6,2) {$\hat{y}$};
+        \node[circle, draw, fill=red!20] (t) at (6,0) {$y$};
+        
+        \draw[->, thick] (x) -- node[above] {$w_1$} (h);
+        \draw[->, thick] (h) -- node[above] {$w_2$} (y);
+        
+        % Error
+        \draw[<->, red, thick] (y) -- node[right] {Error} (t);
+        
+        % Question marks
+        \node[font=\Large, orange] at (1.5,3) {?};
+        \node[font=\Large] at (4.5,3) {\faCheck};
+        
+        % Annotations
+        \node[below, font=\scriptsize, text width=3cm, align=center] at (1.5,0.5) {¿Cuánto contribuyó $w_1$ al error?};
+    \end{tikzpicture}
+    
+    \vspace{0.4cm}
+    \textbf{El dilema:} Sabemos el error en la salida, pero ¿cómo ajustamos los pesos de capas internas que no vemos directamente?
+\end{frame}
+
+\begin{frame}{Backpropagation: La Regla de la Cadena al Rescate}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Idea Central:}
+        \begin{enumerate}
+            \item \textbf{Forward pass:} Calcular predicción
+            \item \textbf{Calcular pérdida:} $L = (\hat{y} - y)^2$
+            \item \textbf{Backward pass:} Propagar gradientes hacia atrás usando la regla de la cadena
+            \item \textbf{Actualizar pesos:} $w = w - \eta \frac{\partial L}{\partial w}$
+        \end{enumerate}
+        
+        \column{0.5\textwidth}
+        \textbf{Regla de la Cadena:}
+        \[
+        \frac{\partial L}{\partial w_1} = \frac{\partial L}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial h} \cdot \frac{\partial h}{\partial w_1}
+        \]
+        
+        \vspace{0.3cm}
+        \centering
+        \begin{tikzpicture}[scale=0.7]
+            \node (w1) at (0,0) {$w_1$};
+            \node (h) at (2,0) {$h$};
+            \node (y) at (4,0) {$\hat{y}$};
+            \node (L) at (6,0) {$L$};
+            
+            \draw[->] (w1) -- (h);
+            \draw[->] (h) -- (y);
+            \draw[->] (y) -- (L);
+            
+            \draw[->, red, thick, bend right=40] (L) to node[below, font=\tiny] {gradientes} (w1);
+        \end{tikzpicture}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Rumelhart, Hinton \& Williams (1986)}
+        ``Learning representations by back-propagating errors'' - El paper que revivió las redes neuronales.
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Funciones de Activación}
+    \centering
+    \begin{tikzpicture}[scale=0.65]
+        % Sigmoid
+        \begin{scope}[xshift=0cm]
+            \draw[->] (-2,0) -- (2,0);
+            \draw[->] (0,-0.5) -- (0,2.5);
+            \draw[thick, blue, domain=-2:2, samples=50] plot (\x, {2/(1+exp(-2*\x))});
+            \node[below, font=\scriptsize\bfseries] at (0,-0.8) {Sigmoid};
+            \node[font=\tiny] at (0,-1.3) {$\sigma(x) = \frac{1}{1+e^{-x}}$};
+        \end{scope}
+        
+        % Tanh
+        \begin{scope}[xshift=5cm]
+            \draw[->] (-2,0) -- (2,0);
+            \draw[->] (0,-1.5) -- (0,1.5);
+            \draw[thick, red, domain=-2:2, samples=50] plot (\x, {tanh(\x)});
+            \node[below, font=\scriptsize\bfseries] at (0,-1.8) {Tanh};
+            \node[font=\tiny] at (0,-2.3) {$\tanh(x)$};
+        \end{scope}
+        
+        % ReLU
+        \begin{scope}[xshift=10cm]
+            \draw[->] (-2,0) -- (2,0);
+            \draw[->] (0,-0.5) -- (0,2.5);
+            \draw[thick, green!60!black] (-2,0) -- (0,0) -- (2,2);
+            \node[below, font=\scriptsize\bfseries] at (0,-0.8) {ReLU};
+            \node[font=\tiny] at (0,-1.3) {$\max(0, x)$};
+        \end{scope}
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{columns}[t]
+        \column{0.32\textwidth}
+        \textbf{Sigmoid:}
+        \begin{itemize}
+            \item Histórica (80s-90s)
+            \item Problema: gradiente desvaneciente
+        \end{itemize}
+        
+        \column{0.32\textwidth}
+        \textbf{Tanh:}
+        \begin{itemize}
+            \item Centrada en cero
+            \item Mejor que sigmoid
+        \end{itemize}
+        
+        \column{0.32\textwidth}
+        \textbf{ReLU:}
+        \begin{itemize}
+            \item Moderna (2010+)
+            \item Simple y efectiva
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 5: IA VS HUMANOS EN JUEGOS
+%===========================================================
+\section{IA vs Humanos: Ajedrez y Go}
+
+\begin{frame}{Deep Blue vs Kasparov (1997)}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \begin{block}{El Momento Histórico}
+            El 11 de mayo de 1997, \textbf{Deep Blue} de IBM derrotó al campeón mundial de ajedrez \textbf{Garry Kasparov} en un match de 6 partidas (3.5 - 2.5).
+        \end{block}
+        
+        \vspace{0.3cm}
+        \textbf{Características de Deep Blue:}
+        \begin{itemize}
+            \item 256 procesadores especializados
+            \item Evaluaba 200 millones de posiciones/segundo
+            \item Base de datos de aperturas y finales
+            \item \textbf{Fuerza bruta + heurísticas}
+            \item NO usaba redes neuronales
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.6]
+            % Chessboard simplified
+            \foreach \i in {0,...,7} {
+                \foreach \j in {0,...,7} {
+                    \pgfmathparse{mod(\i+\j,2) ? "white" : "gray!40"}
+                    \fill[\pgfmathresult] (\i*0.5,\j*0.5) rectangle (\i*0.5+0.5,\j*0.5+0.5);
+                }
+            }
+            \draw[thick] (0,0) rectangle (4,4);
+            
+            % Crown for computer
+            \node[font=\Large] at (2,5) {\faTrophy};
+            \node[font=\scriptsize, text width=2.5cm, align=center] at (2,5.8) {Primera victoria de máquina};
+        \end{tikzpicture}
+        
+        \vspace{0.3cm}
+        \begin{alertblock}{Kasparov dijo:}
+            ``Sentí una nueva forma de inteligencia al otro lado del tablero.''
+        \end{alertblock}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{¿Por qué el Ajedrez era ``Fácil'' para las Máquinas?}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{El ajedrez es ``computable'':}
+        \begin{itemize}
+            \item Reglas perfectamente definidas
+            \item Estado completamente observable
+            \item Árbol de búsqueda finito (aunque enorme)
+            \item ~$10^{44}$ posiciones posibles
+            \item Evaluación de posiciones relativamente clara
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Estrategia de Deep Blue:}
+        \begin{enumerate}
+            \item Búsqueda minimax con poda alfa-beta
+            \item Profundidad de 12+ movimientos
+            \item Funciones de evaluación diseñadas por expertos
+        \end{enumerate}
+        
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7]
+            % Game tree
+            \node[circle, draw, fill=blue!20] (root) at (0,0) {};
+            
+            \node[circle, draw, fill=red!20] (a) at (-2,-1.2) {};
+            \node[circle, draw, fill=red!20] (b) at (0,-1.2) {};
+            \node[circle, draw, fill=red!20] (c) at (2,-1.2) {};
+            
+            \node[circle, draw, fill=blue!20, scale=0.7] (a1) at (-2.7,-2.2) {};
+            \node[circle, draw, fill=blue!20, scale=0.7] (a2) at (-1.3,-2.2) {};
+            \node[circle, draw, fill=blue!20, scale=0.7] (b1) at (-0.5,-2.2) {};
+            \node[circle, draw, fill=blue!20, scale=0.7] (b2) at (0.5,-2.2) {};
+            \node[circle, draw, fill=blue!20, scale=0.7] (c1) at (1.3,-2.2) {};
+            \node[circle, draw, fill=blue!20, scale=0.7] (c2) at (2.7,-2.2) {};
+            
+            \draw (root) -- (a);
+            \draw (root) -- (b);
+            \draw (root) -- (c);
+            \draw (a) -- (a1);
+            \draw (a) -- (a2);
+            \draw (b) -- (b1);
+            \draw (b) -- (b2);
+            \draw (c) -- (c1);
+            \draw (c) -- (c2);
+            
+            \node at (0,-3) {...};
+            
+            \node[right, font=\scriptsize] at (3,0) {MAX};
+            \node[right, font=\scriptsize] at (3,-1.2) {MIN};
+            \node[right, font=\scriptsize] at (3,-2.2) {MAX};
+        \end{tikzpicture}
+        
+        \vspace{0.2cm}
+        \scriptsize Árbol de búsqueda minimax
+    \end{columns}
+\end{frame}
+
+\begin{frame}{AlphaGo vs Lee Sedol (2016)}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \begin{block}{El Desafío ``Imposible''}
+            En marzo de 2016, \textbf{AlphaGo} de DeepMind derrotó al campeón mundial de Go \textbf{Lee Sedol} 4-1 en Seúl.
+        \end{block}
+        
+        \vspace{0.2cm}
+        \textbf{¿Por qué Go era tan difícil?}
+        \begin{itemize}
+            \item Tablero 19×19 = 361 intersecciones
+            \item ~$10^{170}$ posiciones posibles (más que átomos en el universo)
+            \item La fuerza bruta es \textbf{imposible}
+            \item Requiere ``intuición'' y reconocimiento de patrones
+            \item Los expertos predecían: ``faltan 10 años''
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.45]
+            % Go board
+            \draw[step=1, gray, thin] (0,0) grid (9,9);
+            \draw[thick] (0,0) rectangle (9,9);
+            
+            % Star points
+            \foreach \x/\y in {2/2, 2/6, 6/2, 6/6, 4/4} {
+                \fill (\x+0.5,\y+0.5) circle (3pt);
+            }
+            
+            % Some stones
+            \fill[black] (3.5,5.5) circle (0.35);
+            \fill[white] (4.5,5.5) circle (0.35);
+            \draw (4.5,5.5) circle (0.35);
+            \fill[black] (4.5,4.5) circle (0.35);
+            \fill[white] (3.5,4.5) circle (0.35);
+            \draw (3.5,4.5) circle (0.35);
+            \fill[black] (5.5,6.5) circle (0.35);
+            \fill[white] (6.5,5.5) circle (0.35);
+            \draw (6.5,5.5) circle (0.35);
+        \end{tikzpicture}
+        
+        \vspace{0.3cm}
+        \begin{exampleblock}{Movimiento 37, Partida 2}
+            AlphaGo jugó un movimiento que ningún humano habría considerado. Resultó ser brillante.
+        \end{exampleblock}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{AlphaGo: La Arquitectura que Cambió Todo}
+    \centering
+    \begin{tikzpicture}[scale=0.75, transform shape]
+        % Policy Network
+        \node[draw, fill=blue!20, minimum width=2.5cm, minimum height=1cm, rounded corners] (policy) at (0,2) {Policy Network};
+        \node[below, font=\tiny, text width=2.5cm, align=center] at (0,1.2) {``¿Qué movimiento parece bueno?''};
+        
+        % Value Network
+        \node[draw, fill=green!20, minimum width=2.5cm, minimum height=1cm, rounded corners] (value) at (0,0) {Value Network};
+        \node[below, font=\tiny, text width=2.5cm, align=center] at (0,-0.8) {``¿Quién va ganando?''};
+        
+        % MCTS
+        \node[draw, fill=yellow!30, minimum width=2.5cm, minimum height=1cm, rounded corners] (mcts) at (5,1) {Monte Carlo Tree Search};
+        
+        % Output
+        \node[draw, fill=red!20, minimum width=2cm, minimum height=0.8cm, rounded corners] (move) at (9,1) {Mejor Movimiento};
+        
+        % Arrows
+        \draw[->, thick] (policy) -- (mcts);
+        \draw[->, thick] (value) -- (mcts);
+        \draw[->, thick] (mcts) -- (move);
+        
+        % CNN label
+        \node[left, font=\scriptsize] at (-1.8,1) {\textbf{CNNs profundas}};
+        \draw[decorate, decoration={brace, amplitude=5pt}] (-1.5,2.5) -- (-1.5,-0.5);
+    \end{tikzpicture}
+    
+    \vspace{0.4cm}
+    \textbf{Innovaciones clave:}
+    \begin{itemize}
+        \item \textbf{Redes convolucionales} para ``ver'' el tablero como imagen
+        \item \textbf{Entrenamiento con millones de partidas} humanas + auto-juego
+        \item \textbf{Reinforcement Learning:} aprender jugando contra sí mismo
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{De AlphaGo a AlphaZero (2017)}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \begin{alertblock}{AlphaZero: Sin Conocimiento Humano}
+            En 2017, DeepMind presentó \textbf{AlphaZero}:
+            \begin{itemize}
+                \item \textbf{Cero} conocimiento previo de aperturas o estrategias
+                \item Solo las reglas del juego
+                \item Aprendió desde cero en 24 horas
+                \item Derrotó a los mejores programas de ajedrez, Go y shogi
+            \end{itemize}
+        \end{alertblock}
+        
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.8]
+            % Timeline comparison
+            \draw[->] (0,0) -- (5,0) node[right, font=\tiny] {Tiempo};
+            \draw[->] (0,0) -- (0,3.5) node[above, font=\tiny] {Fuerza};
+            
+            % AlphaZero curve
+            \draw[thick, red] (0,0.2) .. controls (1,2) and (2,2.8) .. (4,3);
+            \node[red, font=\tiny] at (4.3,3.2) {AlphaZero};
+            
+            % Stockfish line
+            \draw[thick, blue, dashed] (0,2.5) -- (4,2.5);
+            \node[blue, font=\tiny] at (4.5,2.5) {Stockfish};
+            
+            % Marker
+            \draw[dashed, gray] (1.5,0) -- (1.5,2.5);
+            \node[font=\tiny] at (1.5,-0.3) {4 horas};
+        \end{tikzpicture}
+        
+        \vspace{0.2cm}
+        \scriptsize AlphaZero superó a Stockfish (el mejor motor de ajedrez) en solo 4 horas de entrenamiento
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Lección Fundamental}
+        Las redes neuronales profundas con reinforcement learning pueden descubrir conocimiento que los humanos tardaron siglos en desarrollar.
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 6: DEEP LEARNING
+%===========================================================
+\section{De Redes Superficiales a Deep Learning}
+
+\begin{frame}{El Segundo Invierno y el Dominio de SVMs (1990s-2000s)}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \textbf{¿Por qué otro invierno?}
+        \begin{itemize}
+            \item Redes profundas difíciles de entrenar
+            \item Gradientes desvanecientes
+            \item Overfitting sin suficientes datos
+            \item Computacionalmente costoso
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Las alternativas dominaban:}
+        \begin{itemize}
+            \item Support Vector Machines (SVMs)
+            \item Random Forests
+            \item Boosting (AdaBoost, XGBoost)
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \begin{alertblock}{El Estigma}
+            Las redes neuronales eran vistas como ``cajas negras'' poco confiables. Los métodos con garantías teóricas (como SVMs) eran preferidos.
+        \end{alertblock}
+        
+        \vspace{0.2cm}
+        \begin{exampleblock}{Hinton (2006)}
+            Geoffrey Hinton persistió y desarrolló técnicas para entrenar redes profundas (Deep Belief Networks).
+        \end{exampleblock}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{CUDA: El Catalizador Silencioso (2007)}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \begin{block}{¿Qué es CUDA?}
+            En 2007, NVIDIA lanzó \textbf{CUDA} (Compute Unified Device Architecture): una plataforma para usar GPUs en cómputo de propósito general.
+        \end{block}
+        
+        \vspace{0.2cm}
+        \textbf{¿Por qué fue revolucionario?}
+        \begin{itemize}
+            \item Las GPUs tienen \textbf{miles de núcleos} paralelos
+            \item Multiplicación de matrices = operación fundamental de redes neuronales
+            \item \textbf{100x más rápido} que CPUs para deep learning
+            \item Entrenamiento que tomaba meses → días/horas
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7]
+            % CPU vs GPU comparison
+            % CPU
+            \node[font=\scriptsize\bfseries] at (0,3.5) {CPU};
+            \foreach \i in {0,...,1} {
+                \foreach \j in {0,...,1} {
+                    \fill[blue!60] (\i*0.8-0.4,\j*0.8+1.5) rectangle (\i*0.8+0.3,\j*0.8+2.2);
+                }
+            }
+            \node[font=\tiny] at (0,1) {4-16 núcleos};
+            \node[font=\tiny] at (0,0.5) {potentes};
+            
+            % GPU
+            \node[font=\scriptsize\bfseries] at (4,3.5) {GPU};
+            \foreach \i in {0,...,7} {
+                \foreach \j in {0,...,7} {
+                    \fill[green!60] (\i*0.22+2.1,\j*0.22+1.5) rectangle (\i*0.22+2.3,\j*0.22+1.7);
+                }
+            }
+            \node[font=\tiny] at (4,1) {Miles de núcleos};
+            \node[font=\tiny] at (4,0.5) {simples};
+        \end{tikzpicture}
+        
+        \vspace{0.3cm}
+        \begin{exampleblock}{Dato}
+            Sin GPUs, AlexNet (2012) hubiera tardado meses en entrenar. Con GPUs: ~1 semana.
+        \end{exampleblock}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{2012: El Momento AlexNet}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        % ImageNet error rate
+        \draw[->] (0,0) -- (10,0) node[right, font=\scriptsize] {Año};
+        \draw[->] (0,0) -- (0,5) node[above, font=\scriptsize] {Error (\%)};
+        
+        % Data points
+        \fill[blue] (1,4.2) circle (3pt) node[above, font=\tiny] {28\%};
+        \fill[blue] (2.5,4) circle (3pt) node[above, font=\tiny] {26\%};
+        \fill[red] (4,2.5) circle (3pt) node[above right, font=\tiny] {16.4\%};
+        \fill[blue] (5.5,1.8) circle (3pt);
+        \fill[blue] (7,1.1) circle (3pt);
+        \fill[blue] (8.5,0.5) circle (3pt) node[below, font=\tiny] {3\%};
+        
+        % Line
+        \draw[thick, blue] (1,4.2) -- (2.5,4) -- (4,2.5) -- (5.5,1.8) -- (7,1.1) -- (8.5,0.5);
+        
+        % AlexNet marker
+        \draw[red, thick, dashed] (4,0) -- (4,3);
+        \node[red, font=\scriptsize, rotate=90] at (4.3,1.5) {AlexNet};
+        
+        % Human level
+        \draw[green!60!black, dashed] (0,0.8) -- (10,0.8);
+        \node[green!60!black, font=\tiny] at (9,1.1) {Nivel humano};
+        
+        % Years
+        \node[font=\tiny] at (1,-0.3) {2010};
+        \node[font=\tiny] at (4,-0.3) {2012};
+        \node[font=\tiny] at (7,-0.3) {2015};
+        \node[font=\tiny] at (8.5,-0.3) {2017};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{block}{ImageNet Challenge 2012}
+        AlexNet (Krizhevsky, Sutskever, Hinton) ganó con 16.4\% de error, aplastando al segundo lugar (26\%). \textbf{Ingredientes clave:} GPUs (CUDA), ReLU, dropout, big data. El deep learning había llegado.
+    \end{block}
+\end{frame}
+
+\begin{frame}{Redes Neuronales Convolucionales (CNNs)}
+    \centering
+    \begin{tikzpicture}[scale=0.7, transform shape]
+        % Input image
+        \draw[fill=blue!10] (0,0) rectangle (2,2);
+        \node[font=\scriptsize] at (1,1) {Imagen};
+        \node[below, font=\tiny] at (1,0) {32×32×3};
+        
+        % Conv layer 1
+        \draw[fill=yellow!20] (3,0.2) rectangle (4.5,1.8);
+        \node[font=\tiny, rotate=90] at (3.75,1) {Conv};
+        
+        % Feature maps 1
+        \draw[fill=orange!20] (5,0) rectangle (6.2,2);
+        \node[below, font=\tiny] at (5.6,0) {28×28×32};
+        
+        % Pool
+        \draw[fill=red!20] (6.7,0.3) rectangle (7.7,1.7);
+        \node[font=\tiny, rotate=90] at (7.2,1) {Pool};
+        
+        % Feature maps 2
+        \draw[fill=orange!20] (8.2,0.3) rectangle (9,1.7);
+        \node[below, font=\tiny] at (8.6,0.3) {14×14};
+        
+        % More layers
+        \node at (9.8,1) {...};
+        
+        % FC layers
+        \draw[fill=green!20] (10.5,0.5) rectangle (11,1.5);
+        \draw[fill=green!20] (11.5,0.6) rectangle (12,1.4);
+        
+        % Output
+        \node[font=\scriptsize] at (13,1) {Gato};
+        
+        % Arrows
+        \draw[->] (2,1) -- (3,1);
+        \draw[->] (4.5,1) -- (5,1);
+        \draw[->] (6.2,1) -- (6.7,1);
+        \draw[->] (7.7,1) -- (8.2,1);
+        \draw[->] (9,1) -- (9.5,1);
+        \draw[->] (12,1) -- (12.5,1);
+    \end{tikzpicture}
+    
+    \vspace{0.4cm}
+    \textbf{Ideas clave de las CNNs:}
+    \begin{itemize}
+        \item \textbf{Convoluciones:} Filtros que detectan patrones locales (bordes, texturas)
+        \item \textbf{Pooling:} Reducción de dimensionalidad, invarianza a traslaciones
+        \item \textbf{Jerarquía:} Capas tempranas = bordes, capas profundas = conceptos
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Redes Neuronales Recurrentes (RNNs)}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.8]
+            % RNN unrolled
+            \foreach \i in {0,1,2,3} {
+                \node[circle, draw, fill=yellow!30, minimum size=0.8cm] (h\i) at (\i*2,0) {$h_{\i}$};
+                \node[circle, draw, fill=blue!20, minimum size=0.6cm] (x\i) at (\i*2,-1.5) {$x_{\i}$};
+                \node[circle, draw, fill=green!20, minimum size=0.6cm] (y\i) at (\i*2,1.5) {$y_{\i}$};
+                
+                \draw[->] (x\i) -- (h\i);
+                \draw[->] (h\i) -- (y\i);
+            }
+            
+            % Recurrent connections
+            \foreach \i in {0,1,2} {
+                \pgfmathtruncatemacro{\j}{\i+1}
+                \draw[->, thick, red] (h\i) -- (h\j);
+            }
+            
+            % Labels
+            \node[below, font=\scriptsize] at (3,-2) {Secuencia de entrada (palabras, tiempo)};
+        \end{tikzpicture}
+        
+        \column{0.5\textwidth}
+        \textbf{Para datos secuenciales:}
+        \begin{itemize}
+            \item Texto (palabra por palabra)
+            \item Series de tiempo
+            \item Audio
+            \item Video (frame por frame)
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Problema:} Gradientes desvanecientes en secuencias largas.
+        
+        \vspace{0.3cm}
+        \textbf{Solución:} LSTM (Long Short-Term Memory) - Hochreiter \& Schmidhuber, 1997.
+    \end{columns}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 7: TRANSFORMERS
+%===========================================================
+\section{Transformers: Attention Is All You Need (2017)}
+
+\begin{frame}{El Problema de las RNNs y LSTMs}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Limitaciones de las RNNs:}
+        \begin{itemize}
+            \item \textbf{Procesamiento secuencial:} palabra por palabra, no paralelizable
+            \item \textbf{Memoria limitada:} incluso LSTMs luchan con secuencias muy largas
+            \item \textbf{Cuello de botella:} toda la información debe pasar por un vector oculto
+            \item \textbf{Lento de entrenar:} no aprovecha GPUs completamente
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7]
+            % Bottleneck illustration
+            \node[draw, fill=blue!20, minimum width=0.8cm] at (0,0) {$x_1$};
+            \node[draw, fill=blue!20, minimum width=0.8cm] at (1,0) {$x_2$};
+            \node at (2,0) {...};
+            \node[draw, fill=blue!20, minimum width=0.8cm] at (3,0) {$x_n$};
+            
+            \draw[->, thick] (0,-0.4) -- (1.5,-1.5);
+            \draw[->, thick] (1,-0.4) -- (1.5,-1.5);
+            \draw[->, thick] (3,-0.4) -- (1.5,-1.5);
+            
+            \node[draw, fill=red!30, circle, minimum size=1cm] at (1.5,-2) {$h$};
+            \node[below, font=\tiny] at (1.5,-2.7) {Cuello de botella};
+            
+            \draw[->, thick] (1.5,-2.7) -- (1.5,-3.5);
+            \node[draw, fill=green!20] at (1.5,-4) {Salida};
+        \end{tikzpicture}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{La Pregunta}
+        ¿Podemos procesar secuencias \textbf{en paralelo} y permitir que cada elemento ``vea'' directamente a todos los demás?
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{``Attention Is All You Need'' (2017)}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \begin{block}{El Paper Revolucionario}
+            En junio de 2017, Vaswani et al. (Google) publicaron \textbf{``Attention Is All You Need''}, introduciendo la arquitectura \textbf{Transformer}.
+        \end{block}
+        
+        \vspace{0.2cm}
+        \textbf{La Idea Central:}
+        \begin{itemize}
+            \item \textbf{Eliminar} las recurrencias completamente
+            \item Usar \textbf{solo atención} para capturar dependencias
+            \item Procesar \textbf{toda la secuencia en paralelo}
+            \item Cada palabra puede ``atender'' a cualquier otra directamente
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.65]
+            % Self-attention visualization
+            \node[draw, fill=blue!20, minimum width=0.9cm] (w1) at (0,0) {El};
+            \node[draw, fill=blue!20, minimum width=0.9cm] (w2) at (1.5,0) {gato};
+            \node[draw, fill=blue!20, minimum width=0.9cm] (w3) at (3,0) {come};
+            \node[draw, fill=blue!20, minimum width=0.9cm] (w4) at (4.5,0) {pescado};
+            
+            % Attention arrows from "come"
+            \draw[->, red, thick, opacity=0.3] (w3.north) to[bend left=30] (w1.north);
+            \draw[->, red, thick, opacity=0.8] (w3.north) to[bend left=20] (w2.north);
+            \draw[->, red, thick, opacity=0.2] (w3.north) to[bend left=10] (w3.north east);
+            \draw[->, red, thick, opacity=0.9] (w3.north) to[bend right=20] (w4.north);
+            
+            \node[font=\tiny, text width=4cm, align=center] at (2.25,-1) {``come'' atiende fuertemente a ``gato'' y ``pescado''};
+        \end{tikzpicture}
+        
+        \vspace{0.3cm}
+        \begin{exampleblock}{Impacto}
+            Este paper tiene +100,000 citas. Es la base de BERT, GPT, y todos los LLMs actuales.
+        \end{exampleblock}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{El Mecanismo de Self-Attention}
+    \centering
+    \begin{tikzpicture}[scale=0.75, transform shape]
+        % Input
+        \node[draw, fill=blue!20] (x) at (0,0) {Input $X$};
+        
+        % Q, K, V
+        \node[draw, fill=yellow!30, minimum width=1cm] (q) at (3,1.5) {$Q$};
+        \node[draw, fill=yellow!30, minimum width=1cm] (k) at (3,0) {$K$};
+        \node[draw, fill=yellow!30, minimum width=1cm] (v) at (3,-1.5) {$V$};
+        
+        \draw[->] (x) -- node[above, font=\tiny] {$W_Q$} (q);
+        \draw[->] (x) -- node[above, font=\tiny] {$W_K$} (k);
+        \draw[->] (x) -- node[below, font=\tiny] {$W_V$} (v);
+        
+        % Attention calculation
+        \node[draw, fill=orange!30, minimum width=2cm] (att) at (6.5,0.75) {$\frac{QK^T}{\sqrt{d_k}}$};
+        \node[draw, fill=red!20, minimum width=1.5cm] (soft) at (6.5,-0.75) {Softmax};
+        
+        \draw[->] (q) -- (att);
+        \draw[->] (k) -- (att);
+        \draw[->] (att) -- (soft);
+        
+        % Output
+        \node[draw, fill=green!30, minimum width=1.5cm] (out) at (9.5,0) {Output};
+        
+        \draw[->] (soft) -- (out);
+        \draw[->] (v) -| (out);
+        
+        % Formula below
+        \node[font=\scriptsize] at (5,-3) {$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \textbf{Intuición:}
+    \begin{itemize}
+        \item \textbf{Query (Q):} ``¿Qué estoy buscando?''
+        \item \textbf{Key (K):} ``¿Qué información tengo?''
+        \item \textbf{Value (V):} ``¿Qué información devuelvo?''
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Arquitectura del Transformer}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.55, transform shape]
+            % Encoder
+            \node[draw, fill=blue!10, minimum width=3cm, minimum height=4cm, rounded corners] (enc) at (0,0) {};
+            \node[above, font=\scriptsize\bfseries] at (0,2.3) {Encoder};
+            
+            \node[draw, fill=yellow!30, minimum width=2.5cm, font=\tiny] (sa1) at (0,1.2) {Self-Attention};
+            \node[draw, fill=green!20, minimum width=2.5cm, font=\tiny] (ff1) at (0,0) {Feed Forward};
+            \node[font=\tiny] at (0,-1) {×N capas};
+            
+            % Decoder
+            \node[draw, fill=red!10, minimum width=3cm, minimum height=5cm, rounded corners] (dec) at (5,0.5) {};
+            \node[above, font=\scriptsize\bfseries] at (5,3.3) {Decoder};
+            
+            \node[draw, fill=yellow!30, minimum width=2.5cm, font=\tiny] (sa2) at (5,2) {Masked Self-Att};
+            \node[draw, fill=orange!30, minimum width=2.5cm, font=\tiny] (ca) at (5,0.8) {Cross-Attention};
+            \node[draw, fill=green!20, minimum width=2.5cm, font=\tiny] (ff2) at (5,-0.4) {Feed Forward};
+            \node[font=\tiny] at (5,-1.5) {×N capas};
+            
+            % Arrow from encoder to decoder
+            \draw[->, thick] (enc) -- (ca);
+            
+            % Input/Output
+            \node[below, font=\tiny] at (0,-2.3) {Input};
+            \node[below, font=\tiny] at (5,-2.8) {Output};
+        \end{tikzpicture}
+        
+        \column{0.5\textwidth}
+        \textbf{Componentes clave:}
+        \begin{itemize}
+            \item \textbf{Multi-Head Attention:} Múltiples ``cabezas'' que atienden a diferentes aspectos
+            \item \textbf{Positional Encoding:} Inyecta información de posición (ya que no hay recurrencia)
+            \item \textbf{Layer Normalization:} Estabiliza el entrenamiento
+            \item \textbf{Residual Connections:} Facilita flujo de gradientes
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Multi-Head:}
+        \[
+        \text{MultiHead} = \text{Concat}(\text{head}_1, ..., \text{head}_h)W^O
+        \]
+    \end{columns}
+\end{frame}
+
+\begin{frame}{De Transformers a la Era de los LLMs}
+    \centering
+    \begin{tikzpicture}[scale=0.7, transform shape]
+        % Timeline
+        \draw[thick, ->] (0,0) -- (14,0);
+        
+        % Milestones
+        \foreach \x/\year/\event/\color in {
+            1/2017/Transformer/blue,
+            3.5/2018/BERT/green,
+            6/2018/GPT-1/orange,
+            8.5/2020/GPT-3/red,
+            11/2022/ChatGPT/purple,
+            13/2023/GPT-4/brown
+        } {
+            \draw[\color, thick] (\x,0.15) -- (\x,-0.15);
+            \node[below, font=\tiny] at (\x,-0.2) {\year};
+            \node[above, font=\tiny, text width=1.2cm, align=center, \color] at (\x,0.3) {\event};
+        }
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{columns}[t]
+        \column{0.32\textwidth}
+        \begin{block}{BERT (Google)}
+            Bidireccional, encoder-only. Excelente para comprensión.
+        \end{block}
+        
+        \column{0.32\textwidth}
+        \begin{block}{GPT (OpenAI)}
+            Decoder-only, autoregresivo. Excelente para generación.
+        \end{block}
+        
+        \column{0.32\textwidth}
+        \begin{block}{T5, PaLM, LLaMA...}
+            Variantes y escalamiento masivo.
+        \end{block}
+    \end{columns}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 8: LÍNEA DE TIEMPO Y RESUMEN
+%===========================================================
+\section{Resumen y Ejercicios}
+
+\begin{frame}{El Camino al Estado Actual}
+    \centering
+    \begin{tikzpicture}[scale=0.68, transform shape]
+        % Timeline
+        \draw[thick, ->] (0,0) -- (15,0);
+        
+        % Milestones
+        \foreach \x/\year/\event in {
+            0.8/1958/Perceptrón,
+            2.3/1986/Backprop,
+            3.8/1997/LSTM\\Deep Blue,
+            5.5/2007/CUDA,
+            7/2012/AlexNet,
+            8.5/2016/AlphaGo,
+            10/2017/Transformer,
+            12/2022/ChatGPT,
+            14/2024/GPT-4o\\Claude 3
+        } {
+            \draw (\x,0.15) -- (\x,-0.15);
+            \node[below, font=\tiny] at (\x,-0.2) {\year};
+            \node[above, font=\tiny, text width=1.4cm, align=center] at (\x,0.3) {\event};
+        }
+        
+        % Era labels
+        \draw[decorate, decoration={brace, amplitude=5pt}] (0.3,1.3) -- (4.3,1.3);
+        \node[above, font=\tiny] at (2.3,1.5) {Fundamentos};
+        
+        \draw[decorate, decoration={brace, amplitude=5pt}] (4.3,1.3) -- (9,1.3);
+        \node[above, font=\tiny] at (6.65,1.5) {Deep Learning};
+        
+        \draw[decorate, decoration={brace, amplitude=5pt}] (9,1.3) -- (14.5,1.3);
+        \node[above, font=\tiny] at (11.75,1.5) {Era LLM};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{exampleblock}{Próxima Clase}
+        En la \textbf{Clase 12} profundizaremos en los mecanismos de \textbf{Atención}, implementación práctica de Transformers, y arquitecturas de LLMs modernos.
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Línea de Tiempo Completa}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.1}
+        \tiny
+        \begin{tabular}{p{1.2cm} p{3.8cm} p{6.8cm}}
+            \toprule
+            \textbf{Año} & \textbf{Hito} & \textbf{Significado} \\
+            \midrule
+            1943 & Neurona McCulloch-Pitts & Primer modelo matemático de neurona \\
+            1956 & Conferencia Dartmouth & Nacimiento oficial de la IA como campo \\
+            1958 & Perceptrón & Primera red neuronal que aprende \\
+            1969 & Libro Minsky-Papert & Primer invierno de la IA \\
+            1986 & Backpropagation popularizado & Permite entrenar redes multicapa \\
+            1997 & LSTM / Deep Blue vs Kasparov & Memoria a largo plazo / IA vence campeón de ajedrez \\
+            2007 & CUDA de NVIDIA & GPUs para cómputo general, acelera deep learning \\
+            2012 & AlexNet & Explosión del Deep Learning, dominio de CNNs \\
+            2016 & AlphaGo vs Lee Sedol & IA domina Go, considerado ``imposible'' \\
+            2017 & ``Attention Is All You Need'' & Arquitectura Transformer, base de todos los LLMs \\
+            2022 & ChatGPT & LLMs llegan al público masivo \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}{Ejercicios Propuestos}
+    \begin{enumerate}
+        \setlength\itemsep{0.5em}
+        \item \textbf{Perceptrón:} Implementar un Perceptrón desde cero en Python (sin librerías de ML). Entrenarlo para AND, OR, y verificar que falla en XOR.
+        
+        \item \textbf{XOR con MLP:} Usar PyTorch o TensorFlow para crear un MLP de 2 capas que resuelva XOR. Visualizar la frontera de decisión.
+        
+        \item \textbf{Investigación histórica:} Comparar las estrategias de Deep Blue (1997) vs AlphaGo (2016). ¿Qué las hace fundamentalmente diferentes?
+        
+        \item \textbf{Self-Attention:} Implementar el mecanismo de self-attention en NumPy para una secuencia de 4 palabras. Visualizar la matriz de atención.
+        
+        \item \textbf{Reflexión:} ¿Por qué el paper ``Attention Is All You Need'' fue tan impactante? ¿Qué problemas resolvió respecto a las RNNs?
+        
+        \item \textbf{(Bonus)} Leer el paper original de Transformers y resumir las 3 innovaciones principales.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Recursos Adicionales}
+    \textbf{Papers históricos:}
+    \begin{itemize}
+        \item Rosenblatt, ``The Perceptron'' (1958)
+        \item Rumelhart et al., ``Learning representations by back-propagating errors'' (1986)
+        \item Vaswani et al., ``Attention Is All You Need'' (2017) - \textbf{Lectura obligatoria}
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Videos recomendados:}
+    \begin{itemize}
+        \item 3Blue1Brown: ``Neural Networks'' y ``Attention in Transformers''
+        \item Andrej Karpathy: ``Let's build GPT from scratch''
+        \item Documental: ``AlphaGo'' (disponible en YouTube)
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Libros:}
+    \begin{itemize}
+        \item ``Deep Learning'' - Goodfellow, Bengio, Courville
+        \item ``The Illustrated Transformer'' - Jay Alammar (blog)
+    \end{itemize}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Próxima clase:} Implementación Práctica de Transformers
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``Attention is all you need... and a lot of GPUs.''}
+\end{frame}
+
+\end{document}

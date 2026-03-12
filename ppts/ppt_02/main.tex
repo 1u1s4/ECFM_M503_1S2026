@@ -1,0 +1,461 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{xcolor}
+
+%--- Configuración de Listings para Python ---
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=Python,
+    morekeywords={lambda, map, filter, reduce, True, False}
+}
+\lstset{style=pythonstyle}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 2]{Programación Matemática 2}
+\subtitle{Clase 2: Paradigma Imperativo y Funcional}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: INTRODUCCIÓN
+%===========================================================
+\section{¿Qué es un Paradigma de Programación?}
+
+\begin{frame}{Paradigmas de Programación}
+    \begin{block}{Definición}
+        Un \textbf{paradigma de programación} es una forma fundamental de pensar y estructurar el código. Define \textit{cómo} se describe la solución a un problema.
+    \end{block}
+    \vspace{0.5cm}
+    
+    \textbf{Principales paradigmas:}
+    \begin{itemize}
+        \item \textbf{Imperativo:} Se describe \textit{cómo} hacer algo (secuencia de instrucciones).
+        \item \textbf{Funcional:} Se describe \textit{qué} resultado se desea (transformaciones).
+        \item \textbf{Orientado a Objetos:} Se modela el mundo con objetos y sus interacciones.
+        \item Declarativo, Lógico, Reactivo...
+    \end{itemize}
+    \vspace{0.3cm}
+    \centering
+    \textit{Python es un lenguaje \textbf{multiparadigma}: soporta todos estos estilos.}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: PARADIGMA IMPERATIVO
+%===========================================================
+\section{Paradigma Imperativo}
+
+\begin{frame}{Paradigma Imperativo: Concepto}
+    \begin{alertblock}{Filosofía}
+        \textbf{``Se proporcionan instrucciones paso a paso de CÓMO resolver el problema.''}
+    \end{alertblock}
+    \vspace{0.3cm}
+    
+    \textbf{Características:}
+    \begin{itemize}
+        \item El programa es una \textbf{secuencia de comandos} que modifican el estado.
+        \item Se hace uso extensivo de \textbf{variables mutables}.
+        \item Estructuras de control: \texttt{if}, \texttt{for}, \texttt{while}.
+        \item El orden de las instrucciones \textbf{importa}.
+    \end{itemize}
+    \vspace{0.3cm}
+    
+    \textbf{Analogía:} Una receta de cocina con pasos numerados.
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo Imperativo: Suma de una Lista}
+    \textbf{Problema:} Calcular la suma de los números del 1 al 10.
+    \vspace{0.3cm}
+    
+    \begin{lstlisting}[title=Enfoque Imperativo]
+# Inicializar estado (variable mutable)
+suma = 0
+
+# Secuencia de instrucciones que modifican el estado
+for i in range(1, 11):
+    suma = suma + i  # Se muta 'suma' en cada iteracion
+
+print(f"La suma es: {suma}")
+# Salida: La suma es: 55
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Nótese:} La variable \texttt{suma} cambia 10 veces durante la ejecución.
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo Imperativo: Filtrar Números Pares}
+    \textbf{Problema:} Obtener los números pares de una lista.
+    \vspace{0.3cm}
+    
+    \begin{lstlisting}[title=Enfoque Imperativo]
+numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+pares = []  # Lista mutable vacia
+
+for num in numeros:
+    if num % 2 == 0:  # Condicion
+        pares.append(num)  # Se modifica la lista
+
+print(pares)
+# Salida: [2, 4, 6, 8, 10]
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Patrón típico:} Inicializar $\rightarrow$ Iterar $\rightarrow$ Mutar $\rightarrow$ Retornar
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo Imperativo: Factorial}
+    \textbf{Problema:} Calcular $n! = n \times (n-1) \times \ldots \times 1$
+    \vspace{0.3cm}
+    
+    \begin{lstlisting}[title=Factorial Imperativo]
+def factorial_imperativo(n):
+    resultado = 1  # Estado inicial
+    
+    for i in range(1, n + 1):
+        resultado = resultado * i  # Mutacion
+    
+    return resultado
+
+print(factorial_imperativo(5))
+# Salida: 120
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Flujo mental:} $1 \rightarrow 1 \rightarrow 2 \rightarrow 6 \rightarrow 24 \rightarrow 120$
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: PARADIGMA FUNCIONAL
+%===========================================================
+\section{Paradigma Funcional}
+
+\begin{frame}{Paradigma Funcional: Concepto}
+    \begin{exampleblock}{Filosofía}
+        \textbf{``Se especifica QUÉ resultado se desea, no cómo calcularlo paso a paso.''}
+    \end{exampleblock}
+    \vspace{0.3cm}
+    
+    \textbf{Características:}
+    \begin{itemize}
+        \item Las funciones son \textbf{ciudadanos de primera clase} (se pasan como argumentos).
+        \item \textbf{Inmutabilidad:} Se evita cambiar el estado de las variables.
+        \item \textbf{Funciones puras:} Mismo input $\Rightarrow$ mismo output (sin efectos secundarios).
+        \item Uso de \texttt{map}, \texttt{filter}, \texttt{reduce}, \texttt{lambda}.
+    \end{itemize}
+    \vspace{0.3cm}
+    
+    \textbf{Analogía:} Una función matemática $f(x) = x^2$ siempre da el mismo resultado.
+\end{frame}
+
+\begin{frame}[fragile]{Funciones Lambda (Anónimas)}
+    \begin{block}{Sintaxis}
+        \texttt{lambda argumentos: expresión}
+    \end{block}
+    \vspace{0.3cm}
+    
+    \begin{lstlisting}[title=Ejemplos de Lambda]
+# Funcion tradicional
+def cuadrado(x):
+    return x ** 2
+
+# Equivalente con lambda
+cuadrado_lambda = lambda x: x ** 2
+
+print(cuadrado(5))         # 25
+print(cuadrado_lambda(5))  # 25
+
+# Lambda con multiples argumentos
+suma = lambda a, b: a + b
+print(suma(3, 4))  # 7
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo Funcional: Suma con \texttt{reduce}}
+    \textbf{Problema:} Calcular la suma de los números del 1 al 10.
+    \vspace{0.3cm}
+    
+    \begin{lstlisting}[title=Enfoque Funcional]
+from functools import reduce
+
+numeros = range(1, 11)
+
+# reduce(funcion, iterable) -> aplica funcion acumulativamente
+suma = reduce(lambda acc, x: acc + x, numeros)
+
+print(f"La suma es: {suma}")
+# Salida: La suma es: 55
+
+# Alternativa aun mas funcional (funcion built-in)
+suma_directa = sum(range(1, 11))
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Nótese:} No existen variables que muten. Es una \textit{transformación} de datos.
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo Funcional: Filtrar con \texttt{filter}}
+    \textbf{Problema:} Obtener los números pares de una lista.
+    \vspace{0.3cm}
+    
+    \begin{lstlisting}[title=Enfoque Funcional]
+numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# filter(funcion_booleana, iterable)
+es_par = lambda x: x % 2 == 0
+pares = list(filter(es_par, numeros))
+
+print(pares)
+# Salida: [2, 4, 6, 8, 10]
+
+# Version con list comprehension (estilo Pythonic)
+pares_lc = [x for x in numeros if x % 2 == 0]
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Nota:} \texttt{filter} retorna un iterador, por eso se utiliza \texttt{list()}.
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo Funcional: Transformar con \texttt{map}}
+    \textbf{Problema:} Elevar al cuadrado todos los números de una lista.
+    \vspace{0.3cm}
+    
+    \begin{lstlisting}[title=Enfoque Funcional con map]
+numeros = [1, 2, 3, 4, 5]
+
+# map(funcion, iterable) -> aplica funcion a cada elemento
+cuadrados = list(map(lambda x: x ** 2, numeros))
+
+print(cuadrados)
+# Salida: [1, 4, 9, 16, 25]
+
+# Equivalente con list comprehension
+cuadrados_lc = [x ** 2 for x in numeros]
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Concepto clave:} \texttt{map} transforma \textit{cada} elemento sin modificar la lista original.
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo Funcional: Factorial Recursivo}
+    \textbf{Problema:} Calcular $n!$ sin usar ciclos ni variables mutables.
+    \vspace{0.3cm}
+    
+    \begin{lstlisting}[title=Factorial Funcional (Recursivo)]
+def factorial_funcional(n):
+    # Caso base
+    if n <= 1:
+        return 1
+    # Caso recursivo: n! = n * (n-1)!
+    return n * factorial_funcional(n - 1)
+
+print(factorial_funcional(5))
+# Salida: 120
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Flujo:} $5! = 5 \times 4! = 5 \times 4 \times 3! = \ldots = 5 \times 4 \times 3 \times 2 \times 1$
+    
+    \vspace{0.2cm}
+    \small\textit{La recursión es el ``loop'' del paradigma funcional.}
+\end{frame}
+
+\begin{frame}[fragile]{Composición de Funciones}
+    \textbf{Problema:} Obtener la suma de los cuadrados de los números pares.
+    \vspace{0.3cm}
+    
+    \begin{lstlisting}[title=Pipeline Funcional]
+from functools import reduce
+
+numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# Pipeline: filtrar -> transformar -> reducir
+resultado = reduce(
+    lambda acc, x: acc + x,          # 3. Sumar
+    map(
+        lambda x: x ** 2,            # 2. Elevar al cuadrado
+        filter(lambda x: x % 2 == 0, numeros)  # 1. Filtrar pares
+    )
+)
+
+print(resultado)  # 2^2 + 4^2 + 6^2 + 8^2 + 10^2 = 220
+    \end{lstlisting}
+    
+    \vspace{0.2cm}
+    \textbf{Lectura:} ``Suma de los cuadrados de los pares de números''
+\end{frame}
+
+%===========================================================
+% SECCIÓN 4: COMPARACIÓN
+%===========================================================
+\section{Comparación: Imperativo vs Funcional}
+
+\begin{frame}{Comparación Directa}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.4}
+        \begin{tabular}{p{4cm} p{5cm} p{5cm}}
+            \toprule
+            \textbf{Aspecto} & \textbf{Imperativo} & \textbf{Funcional} \\
+            \midrule
+            Enfoque & \textit{Cómo} hacerlo & \textit{Qué} resultado \\
+            Estado & Variables mutables & Inmutabilidad \\
+            Control de flujo & \texttt{for}, \texttt{while}, \texttt{if} & Recursión, \texttt{map}, \texttt{filter} \\
+            Efectos secundarios & Comunes & Evitados \\
+            Depuración & Seguir paso a paso & Probar funciones aisladas \\
+            Legibilidad & Más verboso & Más declarativo \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}[fragile]{Mismo Problema, Dos Estilos}
+    \textbf{Problema:} Convertir lista de nombres a mayúsculas y filtrar los que empiezan con 'A'.
+    
+    \begin{columns}
+        \column{0.48\textwidth}
+        \begin{lstlisting}[title=Imperativo]
+nombres = ["ana", "bob", 
+           "alberto", "carlos"]
+resultado = []
+
+for nombre in nombres:
+    mayus = nombre.upper()
+    if mayus.startswith('A'):
+        resultado.append(mayus)
+
+print(resultado)
+# ['ANA', 'ALBERTO']
+        \end{lstlisting}
+        
+        \column{0.48\textwidth}
+        \begin{lstlisting}[title=Funcional]
+nombres = ["ana", "bob", 
+           "alberto", "carlos"]
+
+resultado = list(
+    filter(
+        lambda x: x.startswith('A'),
+        map(str.upper, nombres)
+    )
+)
+
+print(resultado)
+# ['ANA', 'ALBERTO']
+        \end{lstlisting}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{¿Cuándo Utilizar Cada Uno?}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{alertblock}{Se recomienda Imperativo cuando...}
+            \begin{itemize}
+                \item Se necesita control preciso del flujo.
+                \item El rendimiento es crítico (menos overhead).
+                \item El algoritmo es inherentemente secuencial.
+                \item Se trabaja con I/O o efectos secundarios.
+            \end{itemize}
+        \end{alertblock}
+        
+        \column{0.48\textwidth}
+        \begin{exampleblock}{Se recomienda Funcional cuando...}
+            \begin{itemize}
+                \item Se procesan colecciones de datos.
+                \item Se busca código más conciso y declarativo.
+                \item Se necesita paralelizar fácilmente.
+                \item Se requieren funciones testeables y predecibles.
+            \end{itemize}
+        \end{exampleblock}
+    \end{columns}
+    
+    \vspace{0.5cm}
+    \centering
+    \textbf{En Python:} Lo mejor de ambos mundos. Se recomienda mezclar según convenga.
+\end{frame}
+
+%===========================================================
+% SECCIÓN 5: EJERCICIOS
+%===========================================================
+\section{Ejercicios Propuestos}
+
+\begin{frame}{Ejercicios para Practicar}
+    \textbf{Resolver cada problema en AMBOS estilos:}
+    \vspace{0.5cm}
+    
+    \begin{enumerate}
+        \setlength\itemsep{0.8em}
+        \item Dada una lista de números, retornar solo los mayores a 10.
+        \item Calcular el producto de todos los elementos de una lista.
+        \item Dada una lista de strings, retornar la concatenación de todos.
+        \item Implementar la función \texttt{fibonacci(n)} que retorne el n-ésimo número de Fibonacci.
+        \item \textbf{(Bonus)} Dada una lista de diccionarios con estudiantes \texttt{\{"nombre": ..., "nota": ...\}}, obtener el promedio de notas de quienes aprobaron (nota $\geq$ 61).
+    \end{enumerate}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Próxima clase:} Paradigma Orientado a Objetos
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``Primero se resuelve el problema. Después, se escribe el código.''} — John Johnson
+\end{frame}
+
+\end{document}

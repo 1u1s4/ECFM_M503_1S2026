@@ -1,0 +1,555 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 6]{Programación Matemática 2}
+\subtitle{Clase 6: Ingeniería de Software - Git (Control de Versiones)}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: INTRODUCCIÓN AL CONTROL DE VERSIONES
+%===========================================================
+\section{¿Qué es el Control de Versiones?}
+
+\begin{frame}{El Problema sin Control de Versiones}
+    \centering
+    \begin{tikzpicture}[node distance=0.8cm]
+        \tikzstyle{file} = [rectangle, minimum width=2.8cm, minimum height=0.6cm, text centered, draw=black, fill=red!20, font=\scriptsize]
+        
+        \node (f1) [file] {proyecto\_v1.py};
+        \node (f2) [file, below=0.3cm of f1] {proyecto\_v2.py};
+        \node (f3) [file, below=0.3cm of f2] {proyecto\_v2\_final.py};
+        \node (f4) [file, below=0.3cm of f3] {proyecto\_v2\_final\_FINAL.py};
+        \node (f5) [file, below=0.3cm of f4] {proyecto\_v3\_corregido.py};
+        \node (f6) [file, below=0.3cm of f5] {proyecto\_ENTREGA.py};
+    \end{tikzpicture}
+    \hspace{1cm}
+    \begin{minipage}{0.5\textwidth}
+        \textbf{Problemas comunes:}
+        \begin{itemize}
+            \item ¿Cuál es la versión correcta?
+            \item ¿Qué cambió entre versiones?
+            \item ¿Cómo colaborar sin sobrescribir?
+            \item ¿Cómo volver a una versión anterior?
+            \item ¿Quién hizo qué cambio y cuándo?
+        \end{itemize}
+    \end{minipage}
+\end{frame}
+
+\begin{frame}{Control de Versiones: La Solución}
+    \begin{block}{Definición}
+        Un \textbf{sistema de control de versiones (VCS)} es una herramienta que registra los cambios realizados a archivos a lo largo del tiempo, permitiendo recuperar versiones específicas posteriormente.
+    \end{block}
+    \vspace{0.3cm}
+    
+    \textbf{Beneficios principales:}
+    \begin{itemize}
+        \item \textbf{Historial completo:} Cada cambio queda registrado con autor, fecha y descripción.
+        \item \textbf{Colaboración:} Múltiples personas trabajan en el mismo proyecto sin conflictos.
+        \item \textbf{Reversibilidad:} Se puede volver a cualquier estado anterior.
+        \item \textbf{Ramificación:} Se desarrollan features en paralelo sin afectar el código principal.
+        \item \textbf{Respaldo:} El código está seguro en múltiples ubicaciones.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Git: El Estándar de la Industria}
+    \begin{columns}
+        \column{0.6\textwidth}
+        \textbf{¿Por qué Git?}
+        \begin{itemize}
+            \item Creado por Linus Torvalds (2005)
+            \item Distribuido: cada copia es un respaldo completo
+            \item Rápido y eficiente
+            \item Usado por el 95\%+ de desarrolladores
+            \item Gratuito y open source
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Plataformas de hosting:}
+        \begin{itemize}
+            \item GitHub (Microsoft)
+            \item GitLab
+            \item Bitbucket (Atlassian)
+        \end{itemize}
+        
+        \column{0.4\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \node[draw, circle, fill=orange!30, minimum size=2cm, font=\Large\bfseries] {Git};
+        \end{tikzpicture}
+        
+        \vspace{0.5cm}
+        \faGithub \ \texttt{github.com}\\
+        \faGitlab \ \texttt{gitlab.com}
+    \end{columns}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: CONCEPTOS FUNDAMENTALES
+%===========================================================
+\section{Conceptos Fundamentales de Git}
+
+\begin{frame}{Los Tres Estados de Git}
+    \centering
+    \begin{tikzpicture}[node distance=2.5cm, auto]
+        \tikzstyle{state} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1.2cm, text centered, draw=black, font=\small]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (wd) [state, fill=red!20] {Working\\Directory};
+        \node (sa) [state, right=2cm of wd, fill=yellow!20] {Staging\\Area};
+        \node (repo) [state, right=2cm of sa, fill=green!20] {Repository\\(.git)};
+        
+        \draw [arrow] (wd) -- node[above, font=\scriptsize] {\texttt{git add}} (sa);
+        \draw [arrow] (sa) -- node[above, font=\scriptsize] {\texttt{git commit}} (repo);
+        \draw [arrow, dashed] (repo.south) -- ++(0,-0.5) -| node[below, font=\scriptsize, pos=0.25] {\texttt{git checkout}} (wd.south);
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{columns}[t]
+        \column{0.32\textwidth}
+        \begin{block}{Working Directory}
+            Archivos actuales en el disco. Se modifican libremente.
+        \end{block}
+        
+        \column{0.32\textwidth}
+        \begin{block}{Staging Area}
+            Cambios preparados para el próximo commit.
+        \end{block}
+        
+        \column{0.32\textwidth}
+        \begin{block}{Repository}
+            Historial completo de commits guardados.
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Conceptos Clave}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Commit}
+            \begin{itemize}
+                \item Instantánea del proyecto en un momento
+                \item Identificado por un hash único (SHA-1)
+                \item Contiene autor, fecha y mensaje
+                \item Inmutable una vez creado
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Branch (Rama)}
+            \begin{itemize}
+                \item Línea independiente de desarrollo
+                \item Permite trabajo paralelo
+                \item \texttt{main} o \texttt{master}: rama principal
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Merge}
+            \begin{itemize}
+                \item Combinar cambios de una rama a otra
+                \item Puede generar conflictos si hay cambios incompatibles
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Remote}
+            \begin{itemize}
+                \item Repositorio en un servidor (GitHub)
+                \item \texttt{origin}: nombre por defecto del remote
+                \item Permite colaboración y respaldo
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Anatomía de un Commit}
+    \centering
+    \begin{tikzpicture}
+        \tikzstyle{commit} = [rectangle, rounded corners, minimum width=8cm, minimum height=3cm, draw=black, fill=blue!10]
+        \tikzstyle{field} = [font=\scriptsize]
+        
+        \node (c) [commit] {};
+        \node [above=0.1cm of c.north, font=\bfseries] {Commit};
+        
+        \node [field, anchor=west] at ([xshift=0.3cm, yshift=0.8cm]c.west) {\textbf{Hash:} \texttt{a1b2c3d4e5f6...}};
+        \node [field, anchor=west] at ([xshift=0.3cm, yshift=0.3cm]c.west) {\textbf{Autor:} Juan Pérez <juan@email.com>};
+        \node [field, anchor=west] at ([xshift=0.3cm, yshift=-0.2cm]c.west) {\textbf{Fecha:} 2026-02-15 10:30:00};
+        \node [field, anchor=west] at ([xshift=0.3cm, yshift=-0.7cm]c.west) {\textbf{Mensaje:} Agregar validación de emails};
+        \node [field, anchor=west] at ([xshift=0.3cm, yshift=-1.2cm]c.west) {\textbf{Parent:} \texttt{f6e5d4c3b2a1...}};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \textbf{Un buen mensaje de commit:} Describe \textit{qué} y \textit{por qué}, no \textit{cómo}.
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: FLUJO DE TRABAJO BÁSICO
+%===========================================================
+\section{Flujo de Trabajo Básico}
+
+\begin{frame}{Comandos Esenciales}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.4}
+        \begin{tabular}{p{3.5cm} p{8cm}}
+            \toprule
+            \textbf{Comando} & \textbf{Descripción} \\
+            \midrule
+            \texttt{git init} & Inicializar un nuevo repositorio \\
+            \texttt{git clone <url>} & Clonar un repositorio existente \\
+            \texttt{git status} & Ver estado actual de los archivos \\
+            \texttt{git add <archivo>} & Agregar archivos al staging area \\
+            \texttt{git commit -m "msg"} & Crear un commit con mensaje \\
+            \texttt{git log} & Ver historial de commits \\
+            \texttt{git diff} & Ver cambios no staged \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}{Flujo de Trabajo Individual}
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm, auto]
+        \tikzstyle{step} = [rectangle, rounded corners, minimum width=2.2cm, minimum height=0.9cm, text centered, draw=black, fill=blue!20, font=\scriptsize]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (edit) [step, fill=red!20] {1. Editar\\archivos};
+        \node (status) [step, right=1cm of edit] {2. git status\\(revisar)};
+        \node (add) [step, right=1cm of status, fill=yellow!20] {3. git add\\(stage)};
+        \node (commit) [step, right=1cm of add, fill=green!20] {4. git commit\\(guardar)};
+        \node (push) [step, right=1cm of commit, fill=purple!20] {5. git push\\(subir)};
+        
+        \draw [arrow] (edit) -- (status);
+        \draw [arrow] (status) -- (add);
+        \draw [arrow] (add) -- (commit);
+        \draw [arrow] (commit) -- (push);
+        
+        \draw [arrow, dashed] (push.south) -- ++(0,-0.7) -| (edit.south);
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{exampleblock}{Regla de Oro}
+        Commits pequeños y frecuentes. Cada commit debe representar un cambio lógico completo.
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 4: BRANCHING (RAMAS)
+%===========================================================
+\section{Branching (Ramas)}
+
+\begin{frame}{¿Por Qué Usar Ramas?}
+    \centering
+    \begin{tikzpicture}[node distance=1cm]
+        \tikzstyle{commit} = [circle, minimum size=0.5cm, draw=black, fill=blue!30]
+        \tikzstyle{branch} = [rectangle, rounded corners, minimum width=1.5cm, minimum height=0.5cm, font=\scriptsize]
+        
+        % Main branch
+        \node (c1) [commit] {};
+        \node (c2) [commit, right=1cm of c1] {};
+        \node (c3) [commit, right=1cm of c2] {};
+        \node (c6) [commit, right=2cm of c3] {};
+        \node (c7) [commit, right=1cm of c6] {};
+        
+        % Feature branch
+        \node (c4) [commit, above right=0.8cm and 1cm of c3, fill=green!30] {};
+        \node (c5) [commit, right=1cm of c4, fill=green!30] {};
+        
+        % Lines
+        \draw [thick] (c1) -- (c2) -- (c3);
+        \draw [thick] (c3) -- (c6) -- (c7);
+        \draw [thick, green!60!black] (c3) -- (c4) -- (c5);
+        \draw [thick, green!60!black, dashed] (c5) -- (c6);
+        
+        % Labels
+        \node [branch, fill=blue!20, above=0.3cm of c7] {main};
+        \node [branch, fill=green!20, above=0.3cm of c5] {feature};
+        
+        % Annotations
+        \node [below=0.5cm of c3, font=\scriptsize] {Branch};
+        \node [below=0.5cm of c6, font=\scriptsize] {Merge};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \textbf{Casos de uso:}
+    \begin{itemize}
+        \item Desarrollar nuevas funcionalidades sin afectar \texttt{main}
+        \item Experimentar con ideas sin riesgo
+        \item Trabajar en paralelo con otros desarrolladores
+        \item Mantener versiones estables separadas de desarrollo
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Comandos de Branching}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.4}
+        \begin{tabular}{p{4.5cm} p{7cm}}
+            \toprule
+            \textbf{Comando} & \textbf{Descripción} \\
+            \midrule
+            \texttt{git branch} & Listar ramas existentes \\
+            \texttt{git branch <nombre>} & Crear nueva rama \\
+            \texttt{git checkout <rama>} & Cambiar a otra rama \\
+            \texttt{git checkout -b <rama>} & Crear y cambiar a nueva rama \\
+            \texttt{git merge <rama>} & Fusionar rama actual con otra \\
+            \texttt{git branch -d <rama>} & Eliminar rama (ya fusionada) \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Nota}
+        El comando moderno \texttt{git switch} reemplaza a \texttt{git checkout} para cambiar ramas.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{Resolución de Conflictos}
+    \begin{block}{¿Cuándo ocurren conflictos?}
+        Cuando dos ramas modifican las mismas líneas del mismo archivo y se intenta hacer merge.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{Proceso de resolución:}
+    \begin{enumerate}
+        \item Git marca los archivos con conflicto
+        \item Se abren los archivos y se identifican las secciones en conflicto
+        \item Se decide qué cambios mantener (o combinar ambos)
+        \item Se eliminan los marcadores de conflicto
+        \item Se hace \texttt{git add} y \texttt{git commit}
+    \end{enumerate}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Con IA}
+        Cursor y otros editores con IA pueden ayudar a resolver conflictos automáticamente o sugerir soluciones.
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 5: TRABAJO COLABORATIVO
+%===========================================================
+\section{Trabajo Colaborativo con GitHub}
+
+\begin{frame}{Repositorios Remotos}
+    \centering
+    \begin{tikzpicture}[node distance=2cm]
+        \tikzstyle{repo} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1.5cm, text centered, draw=black, font=\small]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (remote) [repo, fill=purple!20] {GitHub\\(origin)};
+        \node (local1) [repo, below left=2cm and 1cm of remote, fill=blue!20] {Local\\Dev 1};
+        \node (local2) [repo, below right=2cm and 1cm of remote, fill=green!20] {Local\\Dev 2};
+        
+        \draw [arrow] (local1.north) -- node[left, font=\scriptsize] {push} ([xshift=-0.5cm]remote.south);
+        \draw [arrow] ([xshift=-0.3cm]remote.south) -- node[right, font=\scriptsize] {pull} (local1.north);
+        
+        \draw [arrow] (local2.north) -- node[right, font=\scriptsize] {push} ([xshift=0.5cm]remote.south);
+        \draw [arrow] ([xshift=0.3cm]remote.south) -- node[left, font=\scriptsize] {pull} (local2.north);
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.2}
+        \scriptsize
+        \begin{tabular}{p{3cm} p{8cm}}
+            \toprule
+            \textbf{Comando} & \textbf{Descripción} \\
+            \midrule
+            \texttt{git remote -v} & Ver remotos configurados \\
+            \texttt{git push origin main} & Subir commits al remoto \\
+            \texttt{git pull origin main} & Descargar y fusionar cambios \\
+            \texttt{git fetch} & Descargar sin fusionar \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}{Pull Requests (PR)}
+    \begin{block}{¿Qué es un Pull Request?}
+        Una solicitud para fusionar los cambios de una rama a otra, permitiendo revisión de código antes de la integración.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{Flujo de trabajo con PRs:}
+    \begin{enumerate}
+        \item Crear rama para la feature: \texttt{git checkout -b feature/nueva-funcionalidad}
+        \item Desarrollar y hacer commits en la rama
+        \item Push de la rama al remoto: \texttt{git push origin feature/nueva-funcionalidad}
+        \item Crear Pull Request en GitHub
+        \item Revisión de código por compañeros
+        \item Aprobar y hacer merge
+        \item Eliminar la rama
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{GitHub Flow}
+    \centering
+    \begin{tikzpicture}[node distance=1cm, auto]
+        \tikzstyle{step} = [rectangle, rounded corners, minimum width=2cm, minimum height=0.8cm, text centered, draw=black, fill=blue!20, font=\scriptsize]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (branch) [step] {1. Crear\\rama};
+        \node (commits) [step, right=0.8cm of branch] {2. Hacer\\commits};
+        \node (pr) [step, right=0.8cm of commits, fill=yellow!20] {3. Abrir\\PR};
+        \node (review) [step, right=0.8cm of pr, fill=orange!20] {4. Code\\review};
+        \node (merge) [step, right=0.8cm of review, fill=green!20] {5. Merge\\a main};
+        \node (deploy) [step, right=0.8cm of merge, fill=purple!20] {6. Deploy};
+        
+        \draw [arrow] (branch) -- (commits);
+        \draw [arrow] (commits) -- (pr);
+        \draw [arrow] (pr) -- (review);
+        \draw [arrow] (review) -- (merge);
+        \draw [arrow] (merge) -- (deploy);
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{exampleblock}{Principios del GitHub Flow}
+        \begin{itemize}
+            \item \texttt{main} siempre está en estado deployable
+            \item Las ramas se crean desde \texttt{main} y se fusionan a \texttt{main}
+            \item Los PRs se usan para discusión y revisión
+            \item Se hace deploy inmediatamente después del merge
+        \end{itemize}
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 6: BUENAS PRÁCTICAS
+%===========================================================
+\section{Buenas Prácticas}
+
+\begin{frame}{Buenas Prácticas en Git}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Commits}
+            \begin{itemize}
+                \item Mensajes claros y descriptivos
+                \item Un cambio lógico por commit
+                \item Usar verbos en imperativo: ``Agregar'', ``Corregir'', ``Eliminar''
+                \item No hacer commit de archivos generados
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Archivo .gitignore}
+            \begin{itemize}
+                \item Ignorar \texttt{\_\_pycache\_\_/}
+                \item Ignorar \texttt{.env} (secretos)
+                \item Ignorar \texttt{node\_modules/}
+                \item Ignorar archivos de IDE
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Ramas}
+            \begin{itemize}
+                \item Nombres descriptivos: \texttt{feature/login}, \texttt{fix/bug-123}
+                \item Mantener ramas cortas
+                \item Eliminar ramas después del merge
+                \item Sincronizar frecuentemente con \texttt{main}
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Colaboración}
+            \begin{itemize}
+                \item Hacer pull antes de push
+                \item Revisar código de compañeros
+                \item Documentar decisiones en PRs
+                \item Resolver conflictos prontamente
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Conventional Commits}
+    \begin{block}{Formato}
+        \texttt{<tipo>(<alcance>): <descripción>}
+    \end{block}
+    
+    \vspace{0.3cm}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \begin{tabular}{p{2cm} p{4cm} p{5cm}}
+            \toprule
+            \textbf{Tipo} & \textbf{Uso} & \textbf{Ejemplo} \\
+            \midrule
+            \texttt{feat} & Nueva funcionalidad & \texttt{feat(auth): agregar login con Google} \\
+            \texttt{fix} & Corrección de bug & \texttt{fix(api): corregir error 500 en /users} \\
+            \texttt{docs} & Documentación & \texttt{docs: actualizar README} \\
+            \texttt{refactor} & Refactorización & \texttt{refactor: extraer función de validación} \\
+            \texttt{test} & Tests & \texttt{test: agregar tests para módulo auth} \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 7: EJERCICIOS
+%===========================================================
+\section{Ejercicios Propuestos}
+
+\begin{frame}{Ejercicios de Git}
+    \begin{enumerate}
+        \setlength\itemsep{0.8em}
+        \item \textbf{Básico:} Crear un repositorio local, hacer 5 commits con mensajes siguiendo Conventional Commits.
+        
+        \item \textbf{Branching:} Crear una rama \texttt{feature/calculadora}, desarrollar una función, y hacer merge a \texttt{main}.
+        
+        \item \textbf{GitHub:} Subir el repositorio a GitHub, crear un README.md profesional.
+        
+        \item \textbf{Colaboración:} En parejas, clonar el repositorio del compañero, crear una rama, hacer cambios, y abrir un Pull Request.
+        
+        \item \textbf{(Bonus)} Provocar un conflicto de merge intencionalmente y resolverlo.
+    \end{enumerate}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Próxima clase:} Ingeniería de Software: Docker y Testing
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``Commit early, commit often.''}
+\end{frame}
+
+\end{document}

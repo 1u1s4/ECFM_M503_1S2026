@@ -1,0 +1,589 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{listings}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, fit}
+
+%--- Configuración de Listings ---
+\lstset{
+    basicstyle=\ttfamily\scriptsize,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{red!70!black},
+}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 7]{Programación Matemática 2}
+\subtitle{Clase 7: Ingeniería de Software - Docker y Testing}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: INTRODUCCIÓN A DOCKER
+%===========================================================
+\section{¿Qué es Docker?}
+
+\begin{frame}{El Problema: ``En mi máquina sí funciona''}
+    \centering
+    \begin{tikzpicture}[node distance=1cm]
+        \tikzstyle{machine} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1.5cm, text centered, draw=black, font=\small]
+        \tikzstyle{problem} = [rectangle, minimum width=3cm, minimum height=0.6cm, text centered, draw=black, fill=red!20, font=\scriptsize]
+        
+        \node (dev) [machine, fill=green!20] {Laptop\\Desarrollador};
+        \node (test) [machine, right=2cm of dev, fill=yellow!20] {Servidor\\Testing};
+        \node (prod) [machine, right=2cm of test, fill=blue!20] {Servidor\\Producción};
+        
+        \node (p1) [problem, below=0.8cm of dev] {Python 3.11\\Ubuntu 22.04};
+        \node (p2) [problem, below=0.8cm of test] {Python 3.9\\CentOS 7};
+        \node (p3) [problem, below=0.8cm of prod] {Python 3.10\\Debian 11};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \textbf{Problemas comunes:}
+    \begin{itemize}
+        \item Diferentes versiones de lenguajes y librerías
+        \item Configuraciones de sistema operativo distintas
+        \item Dependencias faltantes o incompatibles
+        \item Variables de entorno diferentes
+        \item ``Funciona en desarrollo, falla en producción''
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Docker: La Solución}
+    \begin{block}{Definición}
+        \textbf{Docker} es una plataforma que permite empaquetar aplicaciones junto con todas sus dependencias en unidades estandarizadas llamadas \textbf{contenedores}.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{Beneficios principales:}
+    \begin{itemize}
+        \item \textbf{Consistencia:} Mismo entorno en desarrollo, testing y producción.
+        \item \textbf{Aislamiento:} Cada contenedor es independiente.
+        \item \textbf{Portabilidad:} Si funciona en Docker, funciona en cualquier lugar.
+        \item \textbf{Eficiencia:} Más ligero que máquinas virtuales.
+        \item \textbf{Reproducibilidad:} El entorno se define en código (Dockerfile).
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \centering
+    \faDocker \ \textit{``Build once, run anywhere''}
+\end{frame}
+
+\begin{frame}{Contenedores vs Máquinas Virtuales}
+    \centering
+    \begin{tikzpicture}[node distance=0.1cm]
+        \tikzstyle{layer} = [rectangle, minimum width=4cm, minimum height=0.7cm, text centered, draw=black, font=\scriptsize]
+        
+        % VM Stack
+        \node (vm-title) at (-3, 3) {\textbf{Máquina Virtual}};
+        \node (vm-hw) [layer, fill=gray!30] at (-3, 0) {Infraestructura};
+        \node (vm-hyp) [layer, fill=orange!30, above=0.1cm of vm-hw] {Hypervisor};
+        \node (vm-os1) [layer, fill=blue!20, above=0.1cm of vm-hyp, minimum width=1.8cm, xshift=-1cm] {Guest OS};
+        \node (vm-os2) [layer, fill=blue!20, above=0.1cm of vm-hyp, minimum width=1.8cm, xshift=1cm] {Guest OS};
+        \node (vm-app1) [layer, fill=green!20, above=0.1cm of vm-os1, minimum width=1.8cm] {App A};
+        \node (vm-app2) [layer, fill=green!20, above=0.1cm of vm-os2, minimum width=1.8cm] {App B};
+        
+        % Docker Stack
+        \node (d-title) at (3, 3) {\textbf{Docker}};
+        \node (d-hw) [layer, fill=gray!30] at (3, 0) {Infraestructura};
+        \node (d-os) [layer, fill=blue!20, above=0.1cm of d-hw] {Sistema Operativo Host};
+        \node (d-docker) [layer, fill=cyan!30, above=0.1cm of d-os] {Docker Engine};
+        \node (d-app1) [layer, fill=green!20, above=0.1cm of d-docker, minimum width=1.2cm, xshift=-1.3cm] {App A};
+        \node (d-app2) [layer, fill=green!20, above=0.1cm of d-docker, minimum width=1.2cm] {App B};
+        \node (d-app3) [layer, fill=green!20, above=0.1cm of d-docker, minimum width=1.2cm, xshift=1.3cm] {App C};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{VM}
+            \begin{itemize}
+                \item OS completo por VM
+                \item GB de tamaño
+                \item Minutos para iniciar
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Contenedor}
+            \begin{itemize}
+                \item Comparte kernel del host
+                \item MB de tamaño
+                \item Segundos para iniciar
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: CONCEPTOS FUNDAMENTALES DE DOCKER
+%===========================================================
+\section{Conceptos Fundamentales de Docker}
+
+\begin{frame}{Conceptos Clave}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Imagen (Image)}
+            \begin{itemize}
+                \item Plantilla de solo lectura
+                \item Contiene código, librerías, dependencias
+                \item Se construye desde un Dockerfile
+                \item Puede basarse en otras imágenes
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Contenedor (Container)}
+            \begin{itemize}
+                \item Instancia ejecutable de una imagen
+                \item Aislado del sistema host
+                \item Tiene su propio filesystem
+                \item Puede crearse, iniciarse, detenerse, eliminarse
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Dockerfile}
+            \begin{itemize}
+                \item Archivo de texto con instrucciones
+                \item Define cómo construir la imagen
+                \item Reproducible y versionable
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Registry (Docker Hub)}
+            \begin{itemize}
+                \item Repositorio de imágenes
+                \item Docker Hub: registry público
+                \item Imágenes oficiales verificadas
+                \item Similar a GitHub para código
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Flujo de Trabajo con Docker}
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm, auto]
+        \tikzstyle{element} = [rectangle, rounded corners, minimum width=2cm, minimum height=1cm, text centered, draw=black, font=\small]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (dockerfile) [element, fill=yellow!20] {Dockerfile};
+        \node (image) [element, right=2cm of dockerfile, fill=blue!20] {Imagen};
+        \node (container) [element, right=2cm of image, fill=green!20] {Contenedor};
+        \node (registry) [element, above=1.5cm of image, fill=purple!20] {Registry\\(Docker Hub)};
+        
+        \draw [arrow] (dockerfile) -- node[above, font=\scriptsize] {\texttt{docker build}} (image);
+        \draw [arrow] (image) -- node[above, font=\scriptsize] {\texttt{docker run}} (container);
+        \draw [arrow] (image) -- node[left, font=\scriptsize] {\texttt{docker push}} (registry);
+        \draw [arrow] (registry) -- node[right, font=\scriptsize] {\texttt{docker pull}} (image);
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{exampleblock}{Analogía}
+        \textbf{Imagen} = Receta de cocina \quad | \quad \textbf{Contenedor} = Plato preparado
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]{Anatomía de un Dockerfile}
+\begin{lstlisting}[language=bash, title=Dockerfile]
+# Imagen base
+FROM python:3.11-slim
+
+# Directorio de trabajo dentro del contenedor
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY requirements.txt .
+
+# Instalar dependencias
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar el resto del codigo
+COPY . .
+
+# Puerto que expone la aplicacion
+EXPOSE 8000
+
+# Comando por defecto al iniciar el contenedor
+CMD ["python", "app.py"]
+\end{lstlisting}
+\end{frame}
+
+
+%===========================================================
+% SECCIÓN 4: DOCKER COMPOSE
+%===========================================================
+\section{Docker Compose}
+
+\begin{frame}{¿Qué es Docker Compose?}
+    \begin{block}{Definición}
+        \textbf{Docker Compose} es una herramienta para definir y ejecutar aplicaciones Docker multi-contenedor usando un archivo YAML.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \centering
+    \begin{tikzpicture}[node distance=0.8cm]
+        \tikzstyle{container} = [rectangle, rounded corners, minimum width=2cm, minimum height=1cm, text centered, draw=black, font=\small]
+        \tikzstyle{arrow} = [thick,<->,>=stealth]
+        
+        \node (web) [container, fill=green!20] {Web\\(Flask)};
+        \node (db) [container, right=2cm of web, fill=blue!20] {Database\\(PostgreSQL)};
+        \node (cache) [container, right=2cm of db, fill=red!20] {Cache\\(Redis)};
+        
+        \draw [arrow] (web) -- (db);
+        \draw [arrow] (db) -- (cache);
+        
+        \node [below=1cm of db, font=\small] {\texttt{docker-compose.yml}};
+        
+        % Bounding box
+        \node[draw, dashed, fit=(web)(db)(cache), inner sep=0.5cm, label=above:Aplicación Multi-Contenedor] {};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \textbf{Ventajas:} Un solo comando para levantar toda la infraestructura.
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo de docker-compose.yml}
+\begin{lstlisting}[title=docker-compose.yml]
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://db:5432/mydb
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=mydb
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+\end{lstlisting}
+\end{frame}
+
+
+
+%===========================================================
+% SECCIÓN 5: INTRODUCCIÓN A TESTING
+%===========================================================
+\section{Introducción a Testing}
+
+\begin{frame}{¿Por Qué Hacer Testing?}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Sin tests:}
+        \begin{itemize}
+            \item ``Creo que funciona...''
+            \item Miedo a hacer cambios
+            \item Bugs descubiertos en producción
+            \item Regresiones frecuentes
+            \item Debugging manual constante
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \textbf{Con tests:}
+        \begin{itemize}
+            \item Confianza en el código
+            \item Refactorización segura
+            \item Documentación ejecutable
+            \item Detección temprana de bugs
+            \item Integración continua posible
+        \end{itemize}
+    \end{columns}
+    
+    \vspace{0.5cm}
+    \begin{block}{Regla de Oro}
+        El costo de arreglar un bug aumenta exponencialmente según la etapa en que se descubre: desarrollo $<$ testing $<$ producción.
+    \end{block}
+\end{frame}
+
+\begin{frame}{Tipos de Tests}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{2.5cm} p{4.5cm} p{4.5cm}}
+            \toprule
+            \textbf{Tipo} & \textbf{Propósito} & \textbf{Ejemplo} \\
+            \midrule
+            \textbf{Unit Test} & Probar una función aislada & \texttt{test\_suma()} verifica que \texttt{2+2=4} \\
+            \textbf{Integration Test} & Probar componentes juntos & API conecta correctamente a la DB \\
+            \textbf{End-to-End (E2E)} & Probar flujo completo del usuario & Usuario puede registrarse y hacer login \\
+            \textbf{Regression Test} & Verificar que bugs arreglados no vuelvan & Bug \#123 sigue corregido \\
+            \textbf{Performance Test} & Medir velocidad y recursos & La API responde en < 200ms \\
+            \textbf{Smoke Test} & Verificar funcionalidad básica & El servidor inicia correctamente \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 6: PYTEST
+%===========================================================
+\section{Testing con Pytest}
+
+\begin{frame}{¿Por Qué Pytest?}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Ventajas de Pytest:}
+        \begin{itemize}
+            \item Sintaxis simple y legible
+            \item Descubrimiento automático de tests
+            \item Fixtures potentes y reutilizables
+            \item Excelentes mensajes de error
+            \item Gran ecosistema de plugins
+            \item Compatible con unittest
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \textbf{Instalación:}
+        \begin{block}{}
+            \texttt{pip install pytest}
+        \end{block}
+        
+        \vspace{0.3cm}
+        \textbf{Ejecutar tests:}
+        \begin{block}{}
+            \texttt{pytest} \\
+            \texttt{pytest -v} (verbose) \\
+            \texttt{pytest test\_file.py}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Escribiendo Tests con Pytest}
+\begin{columns}
+\column{0.48\textwidth}
+\begin{lstlisting}[language=Python, title=calculator.py]
+def suma(a, b):
+    return a + b
+
+def dividir(a, b):
+    if b == 0:
+        raise ValueError(
+            "No dividir por cero"
+        )
+    return a / b
+\end{lstlisting}
+
+\column{0.48\textwidth}
+\begin{lstlisting}[language=Python, title=test\_calculator.py]
+import pytest
+from calculator import suma, dividir
+
+def test_suma_positivos():
+    assert suma(2, 3) == 5
+
+def test_suma_negativos():
+    assert suma(-1, -1) == -2
+
+def test_dividir_normal():
+    assert dividir(10, 2) == 5
+
+def test_dividir_por_cero():
+    with pytest.raises(ValueError):
+        dividir(10, 0)
+\end{lstlisting}
+\end{columns}
+\end{frame}
+
+
+
+%===========================================================
+% SECCIÓN 8: CI/CD
+%===========================================================
+\section{Integración y Despliegue Continuos}
+
+\begin{frame}{CI/CD: Automatización del Flujo}
+    \centering
+    \begin{tikzpicture}[node distance=1cm, auto]
+        \tikzstyle{step} = [rectangle, rounded corners, minimum width=1.8cm, minimum height=0.8cm, text centered, draw=black, fill=blue!20, font=\scriptsize]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (code) [step] {Código};
+        \node (build) [step, right=0.6cm of code] {Build};
+        \node (test) [step, right=0.6cm of build, fill=yellow!20] {Test};
+        \node (review) [step, right=0.6cm of test] {Review};
+        \node (staging) [step, right=0.6cm of review, fill=orange!20] {Staging};
+        \node (prod) [step, right=0.6cm of staging, fill=green!20] {Production};
+        
+        \draw [arrow] (code) -- (build);
+        \draw [arrow] (build) -- (test);
+        \draw [arrow] (test) -- (review);
+        \draw [arrow] (review) -- (staging);
+        \draw [arrow] (staging) -- (prod);
+        
+        % CI/CD labels
+        \draw [decorate, decoration={brace, amplitude=5pt, raise=3pt}] 
+            (code.north west) -- (test.north east) node[midway, above=8pt] {\small CI};
+        \draw [decorate, decoration={brace, amplitude=5pt, raise=3pt}] 
+            (staging.north west) -- (prod.north east) node[midway, above=8pt] {\small CD};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Continuous Integration (CI)}
+            \begin{itemize}
+                \item Merge frecuente a main
+                \item Build automático
+                \item Tests automáticos
+                \item Feedback rápido
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Continuous Deployment (CD)}
+            \begin{itemize}
+                \item Deploy automático a staging
+                \item Deploy a producción (manual o auto)
+                \item Rollback automático si falla
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{GitHub Actions: Ejemplo Básico}
+\begin{lstlisting}[title=.github/workflows/test.yml]
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: pytest -v
+\end{lstlisting}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 10: EJERCICIOS
+%===========================================================
+\section{Ejercicios Propuestos}
+
+\begin{frame}{Ejercicios}
+    \begin{enumerate}
+        \setlength\itemsep{0.7em}
+        \item \textbf{Docker Básico:} Crear un Dockerfile para una aplicación Python simple. Construir la imagen y ejecutar el contenedor.
+        
+        \item \textbf{Docker Compose:} Crear un \texttt{docker-compose.yml} que levante una aplicación web con una base de datos PostgreSQL.
+        
+        \item \textbf{Testing:} Escribir al menos 5 tests unitarios con pytest para un módulo de funciones matemáticas (factorial, fibonacci, es\_primo).
+        
+        \item \textbf{TDD:} Implementar una función \texttt{validar\_email()} usando TDD. Primero escribir los tests, luego la implementación.
+        
+        \item \textbf{(Bonus)} Configurar GitHub Actions para ejecutar los tests automáticamente en cada push.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Recursos Adicionales}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \textbf{Docker:}
+        \begin{itemize}
+            \item \faDocker \ \texttt{docs.docker.com}
+            \item Docker Hub: imágenes oficiales
+            \item Play with Docker (práctica online)
+            \item ``Docker Deep Dive'' - Nigel Poulton
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Testing:}
+        \begin{itemize}
+            \item \texttt{docs.pytest.org}
+            \item ``Python Testing with pytest'' - B. Okken
+            \item Real Python tutorials
+        \end{itemize}
+        
+        \column{0.48\textwidth}
+        \textbf{CI/CD:}
+        \begin{itemize}
+            \item GitHub Actions docs
+            \item GitLab CI/CD
+            \item CircleCI, Jenkins
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Con IA:}
+        \begin{itemize}
+            \item Cursor puede generar Dockerfiles
+            \item Copilot sugiere tests automáticamente
+            \item Claude puede explicar errores de Docker
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Próxima clase:} Hardware para IA: CPU vs GPU vs TPU vs LPU
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``If it works on your machine, then ship your machine.''}\\
+    \textit{— O mejor aún, usa Docker.}
+\end{frame}
+
+\end{document}

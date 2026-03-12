@@ -1,0 +1,842 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{listings}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, matrix}
+
+%--- Configuración de Listings para SQL ---
+\lstdefinestyle{sqlstyle}{
+    language=SQL,
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{green!60!black},
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false
+}
+
+\lstdefinestyle{jsonstyle}{
+    basicstyle=\ttfamily\scriptsize,
+    stringstyle=\color{red},
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false
+}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 9]{Programación Matemática 2}
+\subtitle{Clase 9: Bases de Datos - SQL y NoSQL}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: INTRODUCCIÓN
+%===========================================================
+\section{¿Qué es una Base de Datos?}
+
+\begin{frame}{El Problema: Almacenar y Recuperar Datos}
+    \centering
+    \begin{tikzpicture}[node distance=0.6cm]
+        \tikzstyle{file} = [rectangle, minimum width=2.5cm, minimum height=0.5cm, text centered, draw=black, fill=red!20, font=\scriptsize]
+        
+        \node (f1) [file] {usuarios.txt};
+        \node (f2) [file, below=0.3cm of f1] {productos.csv};
+        \node (f3) [file, below=0.3cm of f2] {ventas\_2024.xlsx};
+        \node (f4) [file, below=0.3cm of f3] {clientes\_backup.json};
+        \node (f5) [file, below=0.3cm of f4] {inventario\_v3.xml};
+    \end{tikzpicture}
+    \hspace{1cm}
+    \begin{minipage}{0.5\textwidth}
+        \textbf{Problemas con archivos planos:}
+        \begin{itemize}
+            \item ¿Cómo buscar eficientemente?
+            \item ¿Cómo manejar acceso concurrente?
+            \item ¿Cómo relacionar datos entre archivos?
+            \item ¿Cómo garantizar consistencia?
+            \item ¿Cómo escalar a millones de registros?
+        \end{itemize}
+    \end{minipage}
+\end{frame}
+
+\begin{frame}{Base de Datos: La Solución}
+    \begin{block}{Definición}
+        Una \textbf{base de datos} es una colección organizada de datos estructurados, almacenados y accedidos electrónicamente. Un \textbf{DBMS} (Database Management System) es el software que gestiona estas bases de datos.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{Beneficios principales:}
+    \begin{itemize}
+        \item \textbf{Persistencia:} Datos sobreviven al reinicio del sistema
+        \item \textbf{Consultas eficientes:} Índices y optimización de queries
+        \item \textbf{Concurrencia:} Múltiples usuarios simultáneos
+        \item \textbf{Integridad:} Restricciones y validaciones automáticas
+        \item \textbf{Seguridad:} Control de acceso y permisos
+        \item \textbf{Recuperación:} Backups y restauración ante fallos
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Dos Paradigmas Dominantes}
+    \centering
+    \begin{tikzpicture}[node distance=2cm]
+        % Definición de estilo moderna
+        \tikzset{
+            paradigm/.style={
+                rectangle, 
+                rounded corners, 
+                minimum width=5cm, 
+                minimum height=3cm, % Aumenté un poco la altura para que el texto respire
+                align=center,       % CRUCIAL: Permite el uso de \\ para saltos de línea
+                draw=black, 
+                font=\small
+            }
+        }
+        
+        % Nodo SQL
+        \node (sql) [paradigm, fill=blue!10] {
+            \textbf{SQL (Relacional)}\\[0.2cm]
+            Tablas con filas y columnas\\
+            Esquema rígido\\
+            ACID garantizado\\
+            \textit{MySQL, PostgreSQL, Oracle}
+        };
+        
+        % Nodo NoSQL
+        \node (nosql) [paradigm, fill=green!10, right=0.5cm of sql] {
+            \textbf{NoSQL}\\[0.2cm]
+            Documentos, clave-valor, grafos\\
+            Esquema flexible\\
+            Escalabilidad horizontal\\
+            \textit{MongoDB, Redis, Neo4j}
+        };
+        
+        % Etiquetas de tiempo
+        \node[above=0.2cm of sql, font=\footnotesize\bfseries, text=blue!60!black] {Desde 1970s};
+        \node[above=0.2cm of nosql, font=\footnotesize\bfseries, text=green!60!black] {Desde 2000s};
+        
+    \end{tikzpicture}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: SQL
+%===========================================================
+\section{Bases de Datos Relacionales (SQL)}
+
+\begin{frame}{El Modelo Relacional}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \textbf{Conceptos clave:}
+        \begin{itemize}
+            \item \textbf{Tabla (Relación):} Colección de registros
+            \item \textbf{Fila (Tupla):} Un registro individual
+            \item \textbf{Columna (Atributo):} Un campo del registro
+            \item \textbf{Clave Primaria (PK):} Identificador único
+            \item \textbf{Clave Foránea (FK):} Referencia a otra tabla
+            \item \textbf{Esquema:} Estructura definida previamente
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Creado por:} Edgar F. Codd (IBM, 1970)
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7]
+            % Table representation
+            \draw[fill=blue!10] (0,0) rectangle (4,3);
+            \draw[thick] (0,2.5) -- (4,2.5);
+            
+            % Header
+            \node[font=\scriptsize\bfseries] at (0.7,2.75) {ID};
+            \node[font=\scriptsize\bfseries] at (2,2.75) {Nombre};
+            \node[font=\scriptsize\bfseries] at (3.3,2.75) {Email};
+            
+            % Rows
+            \draw (0,2) -- (4,2);
+            \draw (0,1.5) -- (4,1.5);
+            \draw (0,1) -- (4,1);
+            \draw (0,0.5) -- (4,0.5);
+            
+            % Columns
+            \draw (1.2,0) -- (1.2,2.5);
+            \draw (2.6,0) -- (2.6,2.5);
+            
+            % Data
+            \node[font=\tiny] at (0.6,2.25) {1};
+            \node[font=\tiny] at (1.9,2.25) {Ana};
+            \node[font=\tiny] at (3.3,2.25) {ana@...};
+            
+            \node[font=\tiny] at (0.6,1.75) {2};
+            \node[font=\tiny] at (1.9,1.75) {Luis};
+            \node[font=\tiny] at (3.3,1.75) {luis@...};
+            
+            \node[below, font=\small\bfseries] at (2,0) {Tabla: usuarios};
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+
+\begin{frame}[fragile]{SQL: Lenguaje de Consultas}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{DDL (Data Definition)}
+\begin{lstlisting}[style=sqlstyle]
+-- Crear tabla
+CREATE TABLE usuarios (
+    id INT PRIMARY KEY,
+    nombre VARCHAR(100),
+    email VARCHAR(255) UNIQUE,
+    created_at TIMESTAMP
+);
+
+-- Modificar tabla
+ALTER TABLE usuarios
+ADD COLUMN edad INT;
+\end{lstlisting}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{DML (Data Manipulation)}
+\begin{lstlisting}[style=sqlstyle]
+-- Insertar
+INSERT INTO usuarios 
+VALUES (1, 'Ana', 'ana@mail.com');
+
+-- Actualizar
+UPDATE usuarios 
+SET nombre = 'Ana Maria'
+WHERE id = 1;
+
+-- Eliminar
+DELETE FROM usuarios 
+WHERE id = 1;
+\end{lstlisting}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Consultas SELECT y JOINs}
+\begin{lstlisting}[style=sqlstyle]
+-- Consulta basica con filtros
+SELECT nombre, email FROM usuarios 
+WHERE edad > 18 ORDER BY nombre;
+
+-- JOIN: Combinar datos de multiples tablas
+SELECT u.nombre, p.fecha, p.total
+FROM usuarios u
+INNER JOIN pedidos p ON u.id = p.usuario_id
+WHERE p.total > 100;
+
+-- Agregaciones
+SELECT u.nombre, COUNT(*) as num_pedidos, SUM(p.total) as total_gastado
+FROM usuarios u
+LEFT JOIN pedidos p ON u.id = p.usuario_id
+GROUP BY u.id
+HAVING COUNT(*) > 5;
+\end{lstlisting}
+
+\vspace{0.2cm}
+\textbf{Tipos de JOIN:} INNER (intersección), LEFT (todos de izquierda), RIGHT (todos de derecha), FULL (unión)
+\end{frame}
+
+\begin{frame}{ACID: Garantías Transaccionales}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{\textbf{A}tomicity (Atomicidad)}
+            Una transacción es ``todo o nada''. Si falla cualquier parte, se revierte todo.
+        \end{block}
+        
+        \begin{block}{\textbf{C}onsistency (Consistencia)}
+            La BD pasa de un estado válido a otro estado válido. Las reglas siempre se cumplen.
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{\textbf{I}solation (Aislamiento)}
+            Transacciones concurrentes no interfieren entre sí. Cada una ve datos consistentes.
+        \end{block}
+        
+        \begin{block}{\textbf{D}urability (Durabilidad)}
+            Una vez confirmada (commit), la transacción persiste incluso ante fallos del sistema.
+        \end{block}
+    \end{columns}
+    
+    \vspace{0.4cm}
+    \begin{exampleblock}{Ejemplo: Transferencia bancaria}
+        Restar de cuenta A y sumar a cuenta B debe ser atómico. Si falla el segundo paso, se revierte el primero.
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Bases de Datos SQL Populares}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.4}
+        \scriptsize
+        \begin{tabular}{p{2.5cm} p{3cm} p{3cm} p{3.5cm}}
+            \toprule
+            \textbf{DBMS} & \textbf{Licencia} & \textbf{Fortaleza} & \textbf{Uso típico} \\
+            \midrule
+            PostgreSQL & Open Source & Extensibilidad, estándares & Aplicaciones complejas \\
+            MySQL & Open Source & Velocidad, popularidad & Web (WordPress, etc.) \\
+            SQLite & Dominio público & Embebido, sin servidor & Apps móviles, testing \\
+            Oracle & Comercial & Enterprise, soporte & Grandes corporaciones \\
+            SQL Server & Comercial & Integración Microsoft & Ecosistema .NET \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Recomendación para el curso}
+        Usar \textbf{PostgreSQL} para proyectos serios y \textbf{SQLite} para prototipado rápido.
+    \end{alertblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: NoSQL
+%===========================================================
+\section{Bases de Datos NoSQL}
+
+\begin{frame}{¿Por Qué NoSQL?}
+    \centering
+    \begin{tikzpicture}[node distance=1cm]
+        \tikzstyle{problem} = [rectangle, rounded corners, fill=red!20, minimum width=3cm, minimum height=0.8cm, font=\scriptsize, text centered]
+        
+        \node (p1) [problem] {Datos no estructurados};
+        \node (p2) [problem, right=0.5cm of p1] {Escala masiva (Big Data)};
+        \node (p3) [problem, right=0.5cm of p2] {Alta disponibilidad};
+        \node (p4) [problem, below=0.5cm of p2] {Esquemas cambiantes};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \textbf{Limitaciones de SQL para ciertos casos:}
+    \begin{itemize}
+        \item \textbf{Escalabilidad horizontal difícil:} Sharding complejo en SQL
+        \item \textbf{Esquema rígido:} Cambios de estructura costosos
+        \item \textbf{Datos jerárquicos:} JOINs múltiples = lento
+        \item \textbf{Volumen extremo:} Millones de escrituras/segundo
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \begin{block}{NoSQL = ``Not Only SQL''}
+        No es anti-SQL, sino complementario. Cada herramienta para su caso de uso.
+    \end{block}
+\end{frame}
+
+\begin{frame}{Tipos de Bases de Datos NoSQL}
+    \centering
+    \begin{tikzpicture}[scale=0.85, transform shape]
+        % 'align=center' es obligatorio para usar \\ dentro de los nodos
+        \tikzset{
+            type/.style={
+                rectangle, 
+                rounded corners, 
+                minimum width=2.8cm, % Ajustado para que quepan los 4 en la diapositiva
+                minimum height=2cm, 
+                align=center, 
+                draw=black, 
+                font=\scriptsize
+            }
+        }
+        
+        \node (doc) [type, fill=green!20] {
+            \textbf{Documentos}\\[0.1cm]
+            JSON/BSON\\
+            MongoDB, CouchDB\\
+            \textit{Catálogos, CMS}
+        };
+        
+        \node (kv) [type, fill=yellow!20, right=0.3cm of doc] {
+            \textbf{Clave-Valor}\\[0.1cm]
+            Simple y rápido\\
+            Redis, DynamoDB\\
+            \textit{Caché, sesiones}
+        };
+        
+        \node (col) [type, fill=orange!20, right=0.3cm of kv] {
+            \textbf{Columnar}\\[0.1cm]
+            Familias de columnas\\
+            Cassandra, HBase\\
+            \textit{Series de tiempo}
+        };
+        
+        \node (graph) [type, fill=purple!20, right=0.3cm of col] {
+            \textbf{Grafos}\\[0.1cm]
+            Nodos y aristas\\
+            Neo4j, Neptune\\
+            \textit{Redes sociales}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{Documentos: MongoDB}
+    \begin{columns}
+        \column{0.48\textwidth}
+        \textbf{Estructura de documento (BSON):}
+\begin{lstlisting}[style=jsonstyle]
+{
+  "_id": "507f1f77bcf86cd799439011",
+  "nombre": "Ana Garcia",
+  "email": "ana@mail.com",
+  "edad": 28,
+  "direcciones": [
+    {
+      "tipo": "casa",
+      "ciudad": "Guatemala"
+    },
+    {
+      "tipo": "trabajo",
+      "ciudad": "Mixco"
+    }
+  ],
+  "tags": ["premium", "activo"]
+}
+\end{lstlisting}
+        
+        \column{0.48\textwidth}
+        \textbf{Ventajas:}
+        \begin{itemize}
+            \item Esquema flexible
+            \item Datos anidados naturalmente
+            \item Sin JOINs (datos embebidos)
+            \item Escalabilidad horizontal fácil
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Operaciones básicas:}
+        \begin{itemize}
+            \item \texttt{insertOne()} / \texttt{insertMany()}
+            \item \texttt{find()} / \texttt{findOne()}
+            \item \texttt{updateOne()} / \texttt{updateMany()}
+            \item \texttt{deleteOne()} / \texttt{deleteMany()}
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Consultas en MongoDB}
+\begin{lstlisting}[style=jsonstyle]
+// Buscar usuarios mayores de 25 en Guatemala
+db.usuarios.find({
+    "edad": { "$gt": 25 },
+    "direcciones.ciudad": "Guatemala"
+})
+
+// Agregacion: contar usuarios por ciudad
+db.usuarios.aggregate([
+    { "$unwind": "$direcciones" },
+    { "$group": { 
+        "_id": "$direcciones.ciudad", 
+        "count": { "$sum": 1 } 
+    }},
+    { "$sort": { "count": -1 } }
+])
+
+// Actualizar: agregar tag a usuarios premium
+db.usuarios.updateMany(
+    { "tags": "premium" },
+    { "$push": { "tags": "vip" } }
+)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Clave-Valor: Redis}
+    \begin{columns}
+        \column{0.48\textwidth}
+        \textbf{Características:}
+        \begin{itemize}
+            \item In-memory (ultra rápido)
+            \item Estructuras de datos ricas
+            \item TTL (expiración automática)
+            \item Pub/Sub messaging
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Casos de uso:}
+        \begin{itemize}
+            \item Caché de aplicaciones
+            \item Sesiones de usuario
+            \item Rate limiting
+            \item Leaderboards en tiempo real
+            \item Colas de mensajes
+        \end{itemize}
+        
+        \column{0.48\textwidth}
+        \textbf{Comandos básicos:}
+\begin{lstlisting}[style=jsonstyle]
+# Strings
+SET usuario:1:nombre "Ana"
+GET usuario:1:nombre
+
+# Con expiracion (60 segundos)
+SETEX session:abc123 60 "datos"
+
+# Hashes
+HSET usuario:1 nombre "Ana" edad 28
+HGET usuario:1 nombre
+HGETALL usuario:1
+
+# Listas
+LPUSH cola:tareas "tarea1"
+RPOP cola:tareas
+
+# Contadores
+INCR visitas:pagina:home
+\end{lstlisting}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Grafos: Neo4j}
+    \centering
+    \begin{tikzpicture}[scale=0.9, transform shape]
+        \tikzstyle{node} = [circle, draw, fill=blue!30, minimum size=1cm, font=\scriptsize]
+        \tikzstyle{edge} = [thick, ->, >=stealth]
+        
+        % Nodes
+        \node (ana) [node] {Ana};
+        \node (luis) [node, right=2cm of ana] {Luis};
+        \node (maria) [node, below right=1.5cm and 1cm of ana] {María};
+        \node (post1) [node, fill=green!30, above right=1cm and 1.5cm of ana] {Post 1};
+        \node (post2) [node, fill=green!30, right=2cm of post1] {Post 2};
+        
+        % Edges
+        \draw [edge] (ana) -- node[above, font=\tiny] {SIGUE} (luis);
+        \draw [edge] (ana) -- node[left, font=\tiny] {SIGUE} (maria);
+        \draw [edge] (luis) -- node[right, font=\tiny] {SIGUE} (maria);
+        \draw [edge, bend left] (maria) -- node[below, font=\tiny] {SIGUE} (ana);
+        
+        \draw [edge, blue] (ana) -- node[above left, font=\tiny] {PUBLICÓ} (post1);
+        \draw [edge, blue] (luis) -- node[above, font=\tiny] {PUBLICÓ} (post2);
+        \draw [edge, red] (maria) -- node[right, font=\tiny] {LIKE} (post1);
+        \draw [edge, red] (luis) -- node[below right, font=\tiny] {LIKE} (post1);
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \textbf{Ideal para:} Redes sociales, sistemas de recomendación, detección de fraude, análisis de rutas
+\end{frame}
+
+\begin{frame}[fragile]{Cypher: Lenguaje de Consultas para Grafos}
+\begin{lstlisting}[style=jsonstyle]
+// Crear nodos y relaciones
+CREATE (ana:Usuario {nombre: "Ana", edad: 28})
+CREATE (luis:Usuario {nombre: "Luis", edad: 30})
+CREATE (ana)-[:SIGUE]->(luis)
+
+// Encontrar amigos de amigos
+MATCH (yo:Usuario {nombre: "Ana"})-[:SIGUE]->
+      (amigo)-[:SIGUE]->(amigo_de_amigo)
+WHERE amigo_de_amigo <> yo
+RETURN DISTINCT amigo_de_amigo.nombre
+
+// Camino mas corto entre dos usuarios
+MATCH path = shortestPath(
+    (a:Usuario {nombre: "Ana"})-[:SIGUE*]->
+    (b:Usuario {nombre: "Carlos"})
+)
+RETURN path
+
+// Usuarios con mas seguidores
+MATCH (u:Usuario)<-[:SIGUE]-(seguidor)
+RETURN u.nombre, COUNT(seguidor) as seguidores
+ORDER BY seguidores DESC LIMIT 10
+\end{lstlisting}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 4: COMPARACIÓN
+%===========================================================
+\section{SQL vs NoSQL: ¿Cuándo Usar Cada Uno?}
+
+\begin{frame}{Comparación Directa}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{3cm} p{5cm} p{5cm}}
+            \toprule
+            \textbf{Aspecto} & \textbf{SQL} & \textbf{NoSQL} \\
+            \midrule
+            Esquema & Fijo, definido previamente & Flexible, dinámico \\
+            Escalabilidad & Vertical (más potencia) & Horizontal (más servidores) \\
+            Transacciones & ACID completo & BASE (eventual consistency) \\
+            Relaciones & JOINs nativos & Embebido o referencias manuales \\
+            Consultas & SQL estándar & Varía por sistema \\
+            Madurez & 50+ años, muy maduro & 15-20 años, evolucionando \\
+            Casos de uso & Finanzas, ERP, datos estructurados & Big Data, tiempo real, IoT \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}{BASE vs ACID}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{ACID (SQL)}
+            \begin{itemize}
+                \item \textbf{A}tomicity
+                \item \textbf{C}onsistency
+                \item \textbf{I}solation
+                \item \textbf{D}urability
+            \end{itemize}
+            \vspace{0.2cm}
+            \textit{Prioriza: Consistencia}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{BASE (NoSQL)}
+            \begin{itemize}
+                \item \textbf{B}asically \textbf{A}vailable
+                \item \textbf{S}oft state
+                \item \textbf{E}ventual consistency
+            \end{itemize}
+            \vspace{0.2cm}
+            \textit{Prioriza: Disponibilidad}
+        \end{block}
+    \end{columns}
+    
+    \vspace{0.5cm}
+    \begin{alertblock}{Teorema CAP}
+        En sistemas distribuidos, solo puedes garantizar 2 de 3: \textbf{C}onsistencia, \textbf{A}vailability (Disponibilidad), \textbf{P}artition tolerance (Tolerancia a particiones).
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{Árbol de Decisión}
+    \begin{columns}[c] % La 'c' centra el contenido verticalmente
+        
+        % --- COLUMNA IZQUIERDA: DIAGRAMA ---
+        \begin{column}{0.5\textwidth}
+            \centering
+            \begin{tikzpicture}[node distance=1.2cm, scale=0.65, transform shape]
+                \tikzset{
+                    decision/.style={diamond, draw, fill=yellow!20, text width=1.8cm, align=center, inner sep=0pt, font=\scriptsize},
+                    result/.style={rectangle, rounded corners, draw, fill=green!20, minimum width=1.5cm, minimum height=0.7cm, font=\scriptsize, align=center},
+                    arrow/.style={thick,->,>=stealth}
+                }
+                
+                \node (start) [decision] {¿Datos muy relacionados?};
+                
+                \node (sql) [result, below left=0.8cm and 0.5cm of start] {SQL};
+                \node (q2) [decision, below right=0.8cm and 0.5cm of start] {¿Escala masiva?};
+                
+                \node (q3) [decision, below left=1cm and 0.2cm of q2] {¿Estructura fija?};
+                \node (nosql1) [result, below right=1cm and 0.2cm of q2] {Cassandra};
+                
+                \node (sql2) [result, below left=0.8cm and -0.5cm of q3] {SQL};
+                \node (nosql2) [result, below right=0.8cm and -0.5cm of q3] {MongoDB};
+                
+                \draw [arrow] (start) -- node[left, font=\tiny] {Sí} (sql);
+                \draw [arrow] (start) -- node[right, font=\tiny] {No} (q2);
+                \draw [arrow] (q2) -- node[left, font=\tiny] {No} (q3);
+                \draw [arrow] (q2) -- node[right, font=\tiny] {Sí} (nosql1);
+                \draw [arrow] (q3) -- node[left, font=\tiny] {Sí} (sql2);
+                \draw [arrow] (q3) -- node[right, font=\tiny] {No} (nosql2);
+            \end{tikzpicture}
+        \end{column}
+        
+        % --- COLUMNA DERECHA: TEXTO ---
+        \begin{column}{0.45\textwidth}
+            \begin{exampleblock}{En la práctica}
+                Muchas aplicaciones modernas usan \textbf{persistencia políglota}:
+                \begin{itemize}
+                    \item \textbf{SQL:} Transaccional
+                    \item \textbf{Redis:} Caché
+                    \item \textbf{Elastic:} Búsqueda
+                \end{itemize}
+            \end{exampleblock}
+        \end{column}
+        
+    \end{columns}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 5: BASES DE DATOS EN IA
+%===========================================================
+\section{Bases de Datos para IA}
+
+\begin{frame}{Rol de las Bases de Datos en Proyectos de IA}
+    \centering
+    \begin{tikzpicture}[node distance=0.5cm, scale=0.85, transform shape]
+        % Definición de estilos moderna
+        \tikzset{
+            stage/.style={
+                rectangle, 
+                rounded corners, 
+                minimum width=2.1cm, 
+                minimum height=1.2cm, 
+                align=center,     % Necesario para saltos de línea
+                draw=black, 
+                font=\scriptsize
+            },
+            arrow/.style={thick,->,>=stealth}
+        }
+        
+        % Nodos del flujo
+        \node (data) [stage, fill=blue!15] {Datos\\Crudos};
+        \node (store) [stage, fill=green!15, right=of data] {Almacén\\(SQL/NoSQL)};
+        \node (process) [stage, fill=yellow!15, right=of store] {Preproceso\\(ETL)};
+        \node (train) [stage, fill=orange!15, right=of process] {Entrena-\\miento};
+        \node (serve) [stage, fill=red!15, right=of train] {Inferencia\\(API)};
+        
+        % Flechas principales
+        \draw [arrow] (data) -- (store);
+        \draw [arrow] (store) -- (process);
+        \draw [arrow] (process) -- (train);
+        \draw [arrow] (train) -- (serve);
+        
+        % Feedback loop (mejorado con etiqueta)
+        \draw [arrow, dashed, red!70!black] (serve.south) -- ++(0,-0.6) -| node[pos=0.25, below, font=\tiny] {Feedback / Nuevos Datos} (store.south);
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    
+    \textbf{Usos específicos en el ciclo de vida de IA:}
+    \begin{itemize}\small
+        \item \textbf{Almacenamiento de datasets:} Volúmenes masivos (Terabytes).
+        \item \textbf{Feature Stores:} Gestión de características para ML.
+        \item \textbf{Model Registry:} Control de versiones de modelos.
+        \item \textbf{Logging de inferencia:} Monitoreo para detectar \textit{drift}.
+        \item \textbf{Bases Vectoriales:} Embeddings para RAG (próxima clase).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Ejemplo: Stack de Datos para LLM}
+    \centering
+    \begin{tikzpicture}[node distance=0.4cm, scale=0.85, transform shape]
+        % Estilos
+        \tikzset{
+            db/.style={
+                rectangle, 
+                rounded corners, 
+                minimum width=2.2cm, 
+                minimum height=1.2cm, 
+                align=center, 
+                draw=black, 
+                font=\scriptsize
+            },
+            app/.style={
+                rectangle, 
+                draw=black, 
+                fill=yellow!20, 
+                minimum width=10.5cm, % Ancho suficiente para cubrir las DBs
+                minimum height=1cm, 
+                align=center,
+                font=\small\bfseries
+            }
+        }
+        
+        % 1. Capa de Datos (Alineados horizontalmente)
+        \node (pg) [db, fill=blue!15] {PostgreSQL\\(Usuarios)};
+        \node (mongo) [db, fill=green!15, right=of pg] {MongoDB\\(Historial)};
+        \node (redis) [db, fill=red!15, right=of mongo] {Redis\\(Caché)};
+        \node (vector) [db, fill=purple!15, right=of redis] {Pinecone\\(Vectores)};
+        
+        % 2. Capa de Aplicación
+        % Posicionamos debajo, centrado respecto al grupo de arriba
+        % (Truco: lo ponemos debajo de Redis y lo movemos a la izquierda la mitad de un nodo + mitad del margen)
+        \node (app) [app, below=1.5cm of mongo.south east, xshift=0.2cm] {Aplicación LLM (Python / FastAPI / LangChain)};
+        
+        % 3. Capa de IA Externa
+        \node (llm) [db, fill=orange!20, below=1cm of app, minimum width=4cm] {API LLM\\(OpenAI / Anthropic)};
+        
+        % Conexiones Estilo Diagrama de Arquitectura (Verticales)
+        % La sintaxis (A |- B) significa: "La coordenada X de A y la Y de B"
+        \draw [thick, ->] (pg.south) -- (pg.south |- app.north);
+        \draw [thick, ->] (mongo.south) -- (mongo.south |- app.north);
+        \draw [thick, ->] (redis.south) -- (redis.south |- app.north);
+        \draw [thick, ->] (vector.south) -- (vector.south |- app.north);
+        
+        % Conexión App <-> LLM
+        \draw [thick, <->] (app.south) -- (llm.north);
+        
+    \end{tikzpicture}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 6: EJERCICIOS
+%===========================================================
+\section{Ejercicios Propuestos}
+
+\begin{frame}{Ejercicios}
+    \begin{enumerate}
+        \setlength\itemsep{0.6em}
+        \item \textbf{SQL Básico:} Diseñar el esquema de una tienda online (usuarios, productos, pedidos, reviews). Escribir 5 consultas útiles incluyendo JOINs.
+        
+        \item \textbf{MongoDB:} Modelar los mismos datos de la tienda en documentos. ¿Qué embeber vs. referenciar?
+        
+        \item \textbf{Redis:} Implementar un sistema de caché para las páginas de productos más visitadas con TTL de 1 hora.
+        
+        \item \textbf{Comparación:} Para un sistema de recomendaciones de películas, ¿usarías SQL, MongoDB o Neo4j? Justificar.
+        
+        \item \textbf{(Bonus)} Instalar PostgreSQL y MongoDB localmente (o usar Docker). Insertar 1000 registros en cada uno y comparar tiempos de consulta.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Recursos Adicionales}
+    \textbf{Tutoriales interactivos:}
+    \begin{itemize}
+        \item SQLBolt (sqlbolt.com) - Aprende SQL paso a paso
+        \item MongoDB University - Cursos gratuitos oficiales
+        \item Try Redis (try.redis.io) - Redis en el navegador
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Herramientas:}
+    \begin{itemize}
+        \item DBeaver - Cliente SQL universal gratuito
+        \item MongoDB Compass - GUI para MongoDB
+        \item RedisInsight - GUI para Redis
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Libros:}
+    \begin{itemize}
+        \item \textit{``Designing Data-Intensive Applications''} - Martin Kleppmann
+        \item \textit{``SQL Performance Explained''} - Markus Winand
+    \end{itemize}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Próxima clase:} Bases de Datos Vectoriales para IA
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``Data is the new oil, but databases are the refineries.''}
+\end{frame}
+
+\end{document}

@@ -1,0 +1,729 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{siunitx}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, patterns}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 8]{Programación Matemática 2}
+\subtitle{Clase 8: Hardware para IA - CPU vs GPU vs TPU vs LPU}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: INTRODUCCIÓN
+%===========================================================
+\section{¿Por Qué Importa el Hardware en IA?}
+
+\begin{frame}{El Cuello de Botella Computacional}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \textbf{La IA moderna es intensiva en cómputo:}
+        \begin{itemize}
+            \item GPT-4: estimado en \textbf{1.8 trillones} de parámetros
+            \item Entrenar LLaMA-2 70B: \textbf{1.7 millones} de horas GPU
+            \item Una inferencia de imagen con Stable Diffusion: \textbf{billones} de operaciones
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{El hardware correcto puede significar:}
+        \begin{itemize}
+            \item Días vs meses de entrenamiento
+            \item Milisegundos vs segundos de inferencia
+            \item \$100 vs \$100,000 en costos
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \draw[thick, ->] (0,0) -- (4.5,0) node[right, font=\scriptsize] {Año};
+            \draw[thick, ->] (0,0) -- (0,3.5) node[above, font=\scriptsize] {Cómputo};
+            
+            \draw[blue!70, ultra thick] (0.5,0.2) .. controls (2,0.5) and (3,1.5) .. (4,3.2);
+            
+            \node[font=\tiny] at (1,0.3) {2012};
+            \node[font=\tiny] at (2.5,1) {2018};
+            \node[font=\tiny] at (4,3.5) {2024};
+            
+            \node[font=\scriptsize, text width=2cm, align=center] at (2.5,2.5) {Crecimiento exponencial};
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Los Cuatro Protagonistas}
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm]
+        \tikzstyle{chip} = [rectangle, rounded corners, minimum width=2.8cm, minimum height=1.5cm, text centered, draw=black, font=\small\bfseries]
+        
+        \node (cpu) [chip, fill=blue!25] {CPU\\{\scriptsize Central Processing Unit}};
+        \node (gpu) [chip, right=1cm of cpu, fill=green!25] {GPU\\{\scriptsize Graphics Processing Unit}};
+        \node (tpu) [chip, right=1cm of gpu, fill=orange!25] {TPU\\{\scriptsize Tensor Processing Unit}};
+        \node (lpu) [chip, right=1cm of tpu, fill=purple!25] {LPU\\{\scriptsize Language Processing Unit}};
+        
+        \node[below=0.3cm of cpu, font=\tiny, text width=2.5cm, align=center] {Intel, AMD\\Propósito general};
+        \node[below=0.3cm of gpu, font=\tiny, text width=2.5cm, align=center] {NVIDIA, AMD\\Paralelismo masivo};
+        \node[below=0.3cm of tpu, font=\tiny, text width=2.5cm, align=center] {Google\\Tensores/Matrices};
+        \node[below=0.3cm of lpu, font=\tiny, text width=2.5cm, align=center] {Groq\\Inferencia LLM};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{block}{Pregunta Clave}
+        ¿Por qué no usar CPUs para todo? La respuesta está en la \textbf{arquitectura} y el \textbf{tipo de operaciones} que cada chip optimiza.
+    \end{block}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: CPU
+%===========================================================
+\section{CPU: El Generalista}
+
+\begin{frame}{Arquitectura de una CPU}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.8]
+            \tikzstyle{core} = [rectangle, minimum width=1.8cm, minimum height=1.8cm, draw=black, fill=blue!20]
+            \tikzstyle{cache} = [rectangle, minimum width=4cm, minimum height=0.6cm, draw=black, fill=yellow!20]
+            
+            % Cores
+            \node (c1) [core] at (0,2) {Core 1};
+            \node (c2) [core] at (2.2,2) {Core 2};
+            \node (c3) [core] at (0,0) {Core 3};
+            \node (c4) [core] at (2.2,0) {Core 4};
+            
+            % Cache
+            \node (l3) [cache] at (1.1,-1.5) {L3 Cache (compartida)};
+            
+            % Memory controller
+            \node (mc) [rectangle, minimum width=4cm, minimum height=0.5cm, draw=black, fill=gray!20] at (1.1,-2.3) {\scriptsize Memory Controller};
+            
+            \draw[thick] (c1.south) -- ++(0,-0.3);
+            \draw[thick] (c2.south) -- ++(0,-0.3);
+            \draw[thick] (c3.south) -- (c3.south |- l3.north);
+            \draw[thick] (c4.south) -- (c4.south |- l3.north);
+        \end{tikzpicture}
+        
+        \column{0.5\textwidth}
+        \textbf{Características:}
+        \begin{itemize}
+            \item Pocos núcleos potentes (4-128)
+            \item Alta frecuencia (3-5 GHz)
+            \item Gran caché por núcleo
+            \item Ejecución fuera de orden
+            \item Predicción de saltos sofisticada
+            \item Optimizado para \textbf{latencia}
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Filosofía:} \\
+        ``Hacer una tarea muy rápido''
+    \end{columns}
+\end{frame}
+
+\begin{frame}{CPU: Fortalezas y Limitaciones para IA}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Fortalezas \faThumbsUp}
+            \begin{itemize}
+                \item Excelente para código secuencial
+                \item Versatilidad total
+                \item Disponibilidad universal
+                \item Ideal para preprocesamiento
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{alertblock}{Limitaciones \faThumbsDown}
+            \begin{itemize}
+                \item Pocos núcleos = bajo paralelismo
+                \item Ineficiente para matrices grandes
+                \item No escala bien para deep learning
+            \end{itemize}
+        \end{alertblock}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Cuándo usar CPU para IA}
+        Inferencia de modelos pequeños, preprocesamiento de datos, lógica de control, y cuando no hay GPU disponible.
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: GPU
+%===========================================================
+\section{GPU: El Motor del Deep Learning}
+
+\begin{frame}{De Gráficos a Inteligencia Artificial}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Historia:}
+        \begin{itemize}
+            \item Diseñadas para renderizar gráficos
+            \item 2012: AlexNet usa GPUs → revolución
+            \item CUDA (2006): programación general en GPU
+            \item Hoy: arquitecturas específicas para IA
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{¿Por qué funcionan para IA?}
+        \begin{itemize}
+            \item Renderizar = multiplicar matrices
+            \item Deep Learning = multiplicar matrices
+            \item ¡La misma operación fundamental!
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}
+            % Pixel grid
+            \draw[step=0.3cm, gray, very thin] (0,0) grid (2.4,2.4);
+            \node[below, font=\scriptsize] at (1.2,-0.2) {Píxeles (paralelos)};
+            
+            % Arrow
+            \draw[ultra thick, ->] (2.8,1.2) -- (3.5,1.2);
+            
+            % Neural network representation
+            \foreach \y in {0.3, 0.9, 1.5, 2.1} {
+                \draw[fill=green!30] (3.8,\y) circle (0.15);
+            }
+            \foreach \y in {0.6, 1.2, 1.8} {
+                \draw[fill=blue!30] (4.6,\y) circle (0.15);
+            }
+            \foreach \y in {0.3, 0.9, 1.5, 2.1} {
+                \foreach \yy in {0.6, 1.2, 1.8} {
+                    \draw[gray, thin] (3.95,\y) -- (4.45,\yy);
+                }
+            }
+            \node[below, font=\scriptsize] at (4.2,-0.2) {Neuronas (paralelas)};
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Arquitectura de una GPU}
+    \centering
+    \begin{tikzpicture}[scale=0.75]
+        \tikzstyle{sm} = [rectangle, minimum width=0.4cm, minimum height=0.4cm, draw=black, fill=green!30]
+        
+        % SM grid (simplified)
+        \foreach \x in {0,0.5,1,1.5,2,2.5,3,3.5} {
+            \foreach \y in {0,0.5,1,1.5,2,2.5,3,3.5} {
+                \node[sm] at (\x,\y) {};
+            }
+        }
+        
+        \node[below, font=\small] at (1.75,-0.5) {Streaming Multiprocessors (SMs)};
+        \node[above, font=\small\bfseries] at (1.75,4.2) {GPU: Miles de núcleos pequeños};
+        
+        % Comparison arrow
+        \draw[ultra thick, <->] (5,1.75) -- (6.5,1.75);
+        
+        % CPU representation
+        \foreach \x in {7.5,8.5} {
+            \foreach \y in {1,2.5} {
+                \node[rectangle, minimum width=0.8cm, minimum height=0.8cm, draw=black, fill=blue!30] at (\x,\y) {};
+            }
+        }
+        \node[below, font=\small] at (8,-0.5) {Núcleos CPU};
+        \node[above, font=\small\bfseries] at (8,4.2) {CPU: Pocos núcleos grandes};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \centering
+        \textbf{NVIDIA H100:} 16,896 núcleos CUDA
+        
+        \column{0.5\textwidth}
+        \centering
+        \textbf{Intel i9-14900K:} 24 núcleos
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Jerarquía de GPUs NVIDIA para IA}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{2.2cm} p{1.8cm} p{1.5cm} p{2.2cm} p{2cm} p{2cm}}
+            \toprule
+            \textbf{GPU} & \textbf{VRAM} & \textbf{TDP} & \textbf{Tensor TFLOPS} & \textbf{Precio} & \textbf{Uso típico} \\
+            \midrule
+            RTX 4090 & 24 GB & 450W & 330 (FP16) & \$1,600 & Entusiastas/Dev \\
+            A100 & 40/80 GB & 400W & 312 (TF32) & \$10,000+ & Data Centers \\
+            H100 SXM & 80 GB & 700W & 989 (TF32) & \$30,000+ & Entrenam. LLMs \\
+            H200 & 141 GB & 700W & 989 (TF32) & \$40,000+ & LLMs grandes \\
+            B200 & 192 GB & 1000W & 2,250 (FP8) & \$50,000+ & Frontier AI \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{La Memoria es Crítica}
+        Un modelo de 70B parámetros en FP16 requiere \textbf{140 GB} de VRAM solo para los pesos. La VRAM es frecuentemente el factor limitante.
+    \end{alertblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 4: TPU
+%===========================================================
+\section{TPU: El Chip de Google}
+
+\begin{frame}{Tensor Processing Unit}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \textbf{¿Qué es una TPU?}
+        \begin{itemize}
+            \item ASIC diseñado por Google (2016)
+            \item Optimizado específicamente para TensorFlow
+            \item Disponible en Google Cloud
+            \item Arquitectura de matriz sistólica
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Generaciones:}
+        \begin{itemize}
+            \item TPU v1: Solo inferencia
+            \item TPU v2/v3: Entrenamiento + inferencia
+            \item TPU v4: Pods de hasta 4,096 chips
+            \item TPU v5e/v5p: Última generación (2023)
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}
+            % Systolic array visualization
+            \foreach \x in {0,0.6,1.2,1.8} {
+                \foreach \y in {0,0.6,1.2,1.8} {
+                    \node[draw, rectangle, minimum size=0.5cm, fill=orange!30] at (\x,\y) {};
+                }
+            }
+            
+            % Arrows showing data flow
+            \foreach \y in {0,0.6,1.2,1.8} {
+                \draw[->, thick, blue] (-0.5,\y) -- (0,\y);
+            }
+            \foreach \x in {0,0.6,1.2,1.8} {
+                \draw[->, thick, red] (\x,2.3) -- (\x,1.8);
+            }
+            
+            \node[below, font=\scriptsize] at (0.9,-0.4) {Matriz Sistólica};
+            \node[left, font=\tiny, blue] at (-0.5,0.9) {Datos};
+            \node[above, font=\tiny, red] at (0.9,2.3) {Pesos};
+        \end{tikzpicture}
+        
+        \vspace{0.3cm}
+        \scriptsize Los datos ``fluyen'' a través de la matriz
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Matriz Sistólica: El Corazón de la TPU}
+    \begin{block}{Concepto}
+        Una matriz sistólica es un arreglo de procesadores donde los datos fluyen rítmicamente, como la sangre en el corazón (sístole).
+    \end{block}
+    
+    \centering
+    \begin{tikzpicture}[scale=0.8]
+        % Grid of PEs
+        \foreach \x in {0,1.5,3,4.5} {
+            \foreach \y in {0,1.2,2.4} {
+                \node[draw, circle, minimum size=0.8cm, fill=orange!20, font=\tiny] (pe\x\y) at (\x,\y) {MAC};
+            }
+        }
+        
+        % Horizontal connections
+        \foreach \y in {0,1.2,2.4} {
+            \draw[->, thick] (-0.8,\y) -- (0,\y);
+            \draw[->, thick] (0.4,\y) -- (1.1,\y);
+            \draw[->, thick] (1.9,\y) -- (2.6,\y);
+            \draw[->, thick] (3.4,\y) -- (4.1,\y);
+            \draw[->, thick] (4.9,\y) -- (5.5,\y);
+        }
+        
+        % Vertical connections  
+        \foreach \x in {0,1.5,3,4.5} {
+            \draw[->, thick] (\x,3.2) -- (\x,2.8);
+            \draw[->, thick] (\x,2) -- (\x,1.6);
+            \draw[->, thick] (\x,0.8) -- (\x,0.4);
+        }
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \textbf{Ventaja:} Alta eficiencia energética y reutilización de datos. Menos accesos a memoria.
+\end{frame}
+
+\begin{frame}{TPU vs GPU: Comparación}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.4}
+        \begin{tabular}{p{4cm} p{4.5cm} p{4.5cm}}
+            \toprule
+            \textbf{Aspecto} & \textbf{GPU (NVIDIA)} & \textbf{TPU (Google)} \\
+            \midrule
+            Flexibilidad & Alta (cualquier framework) & Media (mejor con JAX/TF) \\
+            Disponibilidad & Compra o cloud & Solo Google Cloud \\
+            Programación & CUDA, PyTorch, etc. & JAX, TensorFlow \\
+            Costo/hora (cloud) & \$2-30/hr & \$1.5-8/hr \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Dato Curioso}
+        Google usó TPU v4 pods para entrenar PaLM (540B parámetros) y Gemini.
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 5: LPU
+%===========================================================
+\section{LPU: La Nueva Frontera}
+
+\begin{frame}{Groq LPU: Inferencia Ultrarrápida}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \textbf{¿Qué es una LPU?}
+        \begin{itemize}
+            \item Language Processing Unit (Groq, 2024)
+            \item Diseñada exclusivamente para \textbf{inferencia} de LLMs
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Innovación clave:}
+        \begin{itemize}
+            \item Elimina el cuello de botella de memoria
+            \item Latencia determinística
+            \item Flujo de datos sincronizado por software
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}
+            \node[draw, rectangle, rounded corners, minimum width=3cm, minimum height=2cm, fill=purple!20] (lpu) {};
+            \node[above, font=\bfseries] at (lpu.north) {LPU};
+            
+            \node[draw, rectangle, minimum width=2.5cm, minimum height=0.5cm, fill=yellow!30, font=\scriptsize] at (0,0.5) {SRAM (On-chip)};
+            \node[draw, rectangle, minimum width=2.5cm, minimum height=0.5cm, fill=green!30, font=\scriptsize] at (0,-0.2) {Vector Units};
+            \node[draw, rectangle, minimum width=2.5cm, minimum height=0.5cm, fill=blue!30, font=\scriptsize] at (0,-0.9) {Matrix Units};
+        \end{tikzpicture}
+        
+        \vspace{0.3cm}
+        \scriptsize Sin memoria externa HBM
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Rendimiento de Groq}
+    \begin{block}{Velocidad de Inferencia (tokens/segundo)}
+        Groq LPU puede generar \textbf{500+ tokens/segundo} en modelos como LLaMA-2 70B.
+    \end{block}
+    
+    \centering
+    \begin{tikzpicture}
+        % Bar chart
+        \draw[thick, ->] (0,0) -- (8,0) node[right, font=\scriptsize] {tokens/s};
+        \draw[thick, ->] (0,0) -- (0,3.5);
+        
+        % Bars
+        \fill[blue!50] (0.5,0) rectangle (1.5,0.6);
+        \node[below, font=\tiny] at (1,0) {CPU};
+        \node[above, font=\tiny] at (1,0.6) {~10};
+        
+        \fill[green!50] (2,0) rectangle (3,1.5);
+        \node[below, font=\tiny] at (2.5,0) {RTX 4090};
+        \node[above, font=\tiny] at (2.5,1.5) {~50};
+        
+        \fill[orange!50] (3.5,0) rectangle (4.5,2.1);
+        \node[below, font=\tiny] at (4,0) {H100};
+        \node[above, font=\tiny] at (4,2.1) {~100};
+        
+        \fill[purple!50] (5,0) rectangle (6,3.2);
+        \node[below, font=\tiny] at (5.5,0) {Groq LPU};
+        \node[above, font=\tiny] at (5.5,3.2) {\textbf{500+}};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Limitación}
+        Las LPUs actuales son solo para \textbf{inferencia}, no para entrenamiento.
+    \end{alertblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 6: COMPARACIÓN GLOBAL
+%===========================================================
+\section{Comparación y Casos de Uso}
+
+\begin{frame}{Tabla Comparativa Completa}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.2}
+        \scriptsize
+        \begin{tabular}{p{2.3cm} p{2.5cm} p{2.8cm} p{2.8cm} p{2.8cm}}
+            \toprule
+            \textbf{Característica} & \textbf{CPU} & \textbf{GPU} & \textbf{TPU} & \textbf{LPU} \\
+            \midrule
+            Núcleos & 4-128 & 1,000-20,000 & Matriz sistólica & TSP \\
+            Paralelismo & Bajo & Muy alto & Muy alto & Alto (streaming) \\
+            Memoria & DDR5 & HBM (80-192GB) & HBM & SRAM on-chip \\
+            Entrenamiento & Posible (lento) & \textbf{Excelente} & \textbf{Excelente} & No \\
+            Inferencia & Modelos pequeños & Buena & Buena & \textbf{Excepcional} \\
+            Flexibilidad & \textbf{Máxima} & Alta & Media & Baja (solo LLM) \\
+            Disponibilidad & Universal & Alta & Solo GCP & Limitada (Groq) \\
+            Costo inicial & Bajo & Medio-Alto & N/A (cloud) & N/A (cloud) \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}{¿Cuándo Usar Cada Uno?}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{CPU \faServer}
+            \begin{itemize}
+                \item Preprocesamiento de datos
+                \item Modelos pequeños (sklearn)
+                \item Cuando no hay GPU
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{GPU \faMicrochip}
+            \begin{itemize}
+                \item Entrenamiento de cualquier modelo
+                \item PyTorch / cualquier framework
+                \item Fine-tuning de LLMs
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{TPU \faGoogle}
+            \begin{itemize}
+                \item Modelos con TensorFlow/JAX
+                \item Cuando costo/rendimiento importa
+                \item Cargas de trabajo predecibles
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{LPU \faBolt}
+            \begin{itemize}
+                \item Inferencia de LLMs en producción
+                \item Aplicaciones real-time
+                \item Chatbots de alta velocidad
+                \item Cuando latencia es crítica
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Pipeline Típico de IA}
+    \centering
+    \begin{tikzpicture}[node distance=0.8cm, auto]
+        \tikzstyle{stage} = [rectangle, rounded corners, minimum width=2.2cm, minimum height=1cm, text centered, draw=black, font=\scriptsize]
+        \tikzstyle{hw} = [rectangle, minimum width=2cm, minimum height=0.5cm, font=\tiny, fill=gray!20]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (data) [stage, fill=blue!20] {Recolección\\de Datos};
+        \node (prep) [stage, right=0.6cm of data, fill=blue!20] {Preprocesa-\\miento};
+        \node (train) [stage, right=0.6cm of prep, fill=green!20] {Entrena-\\miento};
+        \node (eval) [stage, right=0.6cm of train, fill=yellow!20] {Evaluación};
+        \node (deploy) [stage, right=0.6cm of eval, fill=purple!20] {Deploy /\\Inferencia};
+        
+        \draw [arrow] (data) -- (prep);
+        \draw [arrow] (prep) -- (train);
+        \draw [arrow] (train) -- (eval);
+        \draw [arrow] (eval) -- (deploy);
+        
+        % Hardware labels
+        \node[hw, below=0.3cm of data] {CPU};
+        \node[hw, below=0.3cm of prep] {CPU};
+        \node[hw, below=0.3cm of train] {GPU/TPU};
+        \node[hw, below=0.3cm of eval] {GPU};
+        \node[hw, below=0.3cm of deploy] {GPU/LPU};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{exampleblock}{Insight}
+        No todo el pipeline necesita el mismo hardware. Optimizar cada etapa por separado puede reducir costos significativamente.
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 7: FUTURO Y TENDENCIAS
+%===========================================================
+\section{El Futuro del Hardware para IA}
+
+\begin{frame}{Tendencias Emergentes}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Chips Especializados}
+            \begin{itemize}
+                \item AMD MI300X (competencia a NVIDIA)
+                \item Intel Gaudi 3
+                \item AWS Trainium/Inferentia
+                \item Cerebras (wafer-scale)
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Computación Neuromórfica}
+            \begin{itemize}
+                \item Intel Loihi
+                \item Imita el cerebro biológico
+                \item Ultra bajo consumo
+                \item Ideal para edge AI
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Computación Cuántica}
+            \begin{itemize}
+                \item Potencial para ciertos algoritmos ML
+                \item Aún en etapa experimental
+                \item IBM, Google, IonQ
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Computación en el Edge}
+            \begin{itemize}
+                \item NPUs en smartphones
+                \item Apple Neural Engine
+                \item Qualcomm AI Engine
+                \item Google Edge TPU
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{La Carrera por el Hardware de IA}
+    \centering
+    \begin{tikzpicture}
+        \tikzstyle{company} = [rectangle, rounded corners, minimum width=2cm, minimum height=0.8cm, font=\scriptsize\bfseries, draw=black]
+        
+        % Leader
+        \node[company, fill=green!40] (nvidia) at (0,0) {NVIDIA};
+        \node[right=0.3cm of nvidia, font=\scriptsize] {Dominante (80\%+ market share)};
+        
+        % Challengers
+        \node[company, fill=yellow!40] (amd) at (0,-1) {AMD};
+        \node[company, fill=yellow!40] (google) at (3,-1) {Google (TPU)};
+        
+        % Emerging
+        \node[company, fill=orange!30] (groq) at (0,-2) {Groq};
+        \node[company, fill=orange!30] (cerebras) at (2.5,-2) {Cerebras};
+        \node[company, fill=orange!30] (aws) at (5,-2) {AWS};
+        
+        % Labels
+        \node[left=1cm of nvidia, font=\scriptsize\bfseries] {Líder};
+        \node[left=1cm of amd, font=\scriptsize\bfseries] {Retadores};
+        \node[left=1cm of groq, font=\scriptsize\bfseries] {Emergentes};
+        
+        % Future
+        \node[company, fill=purple!20] (quantum) at (2.5,-3.2) {¿Quantum?};
+        \node[left=1cm of quantum, font=\scriptsize\bfseries] {Futuro};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Implicación Geopolítica}
+        La producción de chips avanzados está concentrada en Taiwán (TSMC). Esto tiene implicaciones estratégicas globales.
+    \end{alertblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 8: PRÁCTICA
+%===========================================================
+\section{Ejercicios Propuestos}
+
+\begin{frame}{Ejercicios}
+    \begin{enumerate}
+        \setlength\itemsep{0.7em}
+        \item \textbf{Investigación:} Comparar las especificaciones de NVIDIA H100 vs AMD MI300X vs Google TPU v5p. Crear una tabla comparativa.
+        
+        \item \textbf{Cálculo:} Si un modelo tiene 7B parámetros en FP16, ¿cuánta VRAM necesita? ¿Cabe en una RTX 4090?
+        
+        \item \textbf{Análisis:} Para un chatbot de servicio al cliente que debe responder en $<$200ms, ¿qué hardware recomendarías y por qué?
+        
+        \item \textbf{Práctica:} Usar Google Colab para comparar el tiempo de entrenamiento de un modelo simple en CPU vs GPU (T4).
+        
+        \item \textbf{(Bonus)} Investigar qué es un ``TPU Pod'' y cómo se conectan múltiples TPUs.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Recursos para Profundizar}
+    \begin{columns}
+        \column{0.48\textwidth}
+        \textbf{Documentación Oficial:}
+        \begin{itemize}
+            \item NVIDIA CUDA Programming Guide
+            \item Google Cloud TPU Documentation
+            \item Groq Developer Hub
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Papers Fundamentales:}
+        \begin{itemize}
+            \item ``In-Datacenter Performance Analysis of a TPU'' (Google, 2017)
+            \item ``Dissecting the NVIDIA Hopper Architecture'' (2022)
+        \end{itemize}
+        
+        \column{0.48\textwidth}
+        \textbf{Herramientas Prácticas:}
+        \begin{itemize}
+            \item Google Colab (GPU/TPU gratis)
+            \item Lambda Labs (cloud GPUs)
+            \item vast.ai (GPUs económicas)
+            \item Groq Cloud (LPU API)
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Canales/Blogs:}
+        \begin{itemize}
+            \item Two Minute Papers
+            \item Chip Huyen's Blog
+            \item NVIDIA Developer Blog
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Próxima clase:} Bases de Datos: SQL y NoSQL
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``El hardware define los límites de lo posible en IA.''}
+\end{frame}
+
+\end{document}

@@ -1,0 +1,712 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, decorations.pathreplacing, trees, fit}
+%--- Configuración de Listings ---
+\lstdefinestyle{promptstyle}{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    columns=fullflexible
+}
+\lstdefinestyle{codestyle}{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{green!5},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    morekeywords={def,return,class,import,from,if,else,while,for,True,False,None,await,async},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red!70!black},
+    commentstyle=\color{gray},
+    columns=fullflexible
+}
+\lstdefinestyle{xmlstyle}{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{blue!5},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    morekeywords={context,question,format,example,input,output,instructions,role,task,tool,action,observation,thought},
+    keywordstyle=\color{blue},
+    columns=fullflexible
+}
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 19]{Programación Matemática 2}
+\subtitle{Clase 19: Agentes de IA: Conceptos y Arquitecturas}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+\begin{document}
+%--- 1. Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+%--- 2. Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+%===========================================================
+% SECCIÓN 1: DE LLMs A AGENTES
+%===========================================================
+\section{De LLMs a Agentes}
+%--- 3. Contexto ---
+\begin{frame}{Contexto: Lo que Ya Sabemos}
+    \textbf{En clases anteriores cubrimos:}
+    \begin{itemize}
+        \item Cómo funcionan los LLMs internamente (tokenización, embeddings, inferencia)
+        \item Ingeniería de prompts para guiar sus respuestas
+        \item RAG para darles acceso a conocimiento externo
+    \end{itemize}
+    
+    \vspace{0.4cm}
+    \begin{block}{Limitación Fundamental de un LLM ``puro''}
+        Un LLM solo puede \textbf{generar texto}. No puede ejecutar código, buscar en internet, enviar emails, ni interactuar con el mundo real. Está atrapado en su ventana de contexto.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{Pregunta:} ¿Cómo pasamos de un modelo que solo genera texto a un sistema que puede \textit{actuar} en el mundo?
+\end{frame}
+%--- 4. Definición de Agente ---
+\begin{frame}{¿Qué es un Agente de IA?}
+    \begin{block}{Definición}
+        Un \textbf{Agente de IA} es un sistema que usa un LLM como ``cerebro'' para \textbf{razonar}, \textbf{planificar} y \textbf{ejecutar acciones} de forma autónoma para cumplir un objetivo, interactuando con herramientas y su entorno.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \tikzset{
+            box/.style={rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm, draw, font=\scriptsize, align=center},
+            arrow/.style={thick, ->, >=stealth}
+        }
+        
+        \node[box, fill=blue!20] (llm) at (0,0) {LLM\\(solo texto)};
+        \node[box, fill=green!20] (agent) at (6,0) {Agente\\(texto + acciones)};
+        
+        \node[below=0.4cm of llm, font=\tiny, text width=3cm, align=center] {Recibe prompt $\rightarrow$ genera texto\\No tiene memoria\\No usa herramientas};
+        \node[below=0.4cm of agent, font=\tiny, text width=3cm, align=center] {Razona $\rightarrow$ decide $\rightarrow$ actúa\\Tiene memoria\\Usa herramientas};
+        
+        \draw[arrow, thick] (llm) -- node[above, font=\scriptsize] {+ herramientas + memoria + loop} (agent);
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \textbf{Analogía:} Un LLM es como un cerebro en un frasco. Un agente es ese cerebro con ojos, manos y la capacidad de caminar.
+\end{frame}
+%--- 5. LLM vs Agente ---
+\begin{frame}{LLM vs Agente: Ejemplo Concreto}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{LLM: ``Reserva un vuelo a Madrid''}
+            \textit{``Para reservar un vuelo a Madrid, te recomiendo visitar sitios como Expedia o Kayak. Los pasos serían: 1) Ingresa tus fechas... 2) Compara precios...''}
+            
+            \vspace{0.2cm}
+            \faExclamationTriangle\ Solo da \textbf{instrucciones}. No hace nada.
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Agente: ``Reserva un vuelo a Madrid''}
+            \begin{enumerate}
+                \scriptsize
+                \item \textit{Busco vuelos disponibles...} \faSearch
+                \item \textit{Encontré 3 opciones. El más barato es \$450.} \faPlane
+                \item \textit{Verifico tu calendario...} \faCalendar
+                \item \textit{Hay conflicto el 15. Ajusto al 16.} \faExchangeAlt
+                \item \textit{Reservo y envío confirmación.} \faEnvelope
+            \end{enumerate}
+            
+            \vspace{0.1cm}
+            \faCheck\ \textbf{Ejecuta acciones} reales.
+        \end{block}
+    \end{columns}
+\end{frame}
+%===========================================================
+% SECCIÓN 2: COMPONENTES DE UN AGENTE
+%===========================================================
+\section{Componentes de un Agente}
+%--- 6. Arquitectura General ---
+\begin{frame}{Arquitectura General de un Agente}
+    \centering
+    \begin{tikzpicture}[scale=0.8, transform shape]
+        \node[rectangle, rounded corners, draw, fill=blue!20, minimum width=4cm, minimum height=1.5cm, font=\small, align=center] (brain) at (0,0) {\faBrain\ \textbf{LLM (Cerebro)}\\Razonamiento y decisiones};
+        
+        \node[rectangle, rounded corners, draw, fill=yellow!20, minimum width=2.8cm, minimum height=1cm, font=\scriptsize, align=center] (plan) at (-5,2) {\faProjectDiagram\ \textbf{Planificación}\\Descomponer tareas};
+        
+        \node[rectangle, rounded corners, draw, fill=purple!20, minimum width=2.8cm, minimum height=1cm, font=\scriptsize, align=center] (mem) at (5,2) {\faDatabase\ \textbf{Memoria}\\Corto y largo plazo};
+        
+        \node[rectangle, rounded corners, draw, fill=green!20, minimum width=2.8cm, minimum height=1cm, font=\scriptsize, align=center] (tools) at (-5,-2) {\faWrench\ \textbf{Herramientas}\\APIs, código, búsqueda};
+        
+        \node[rectangle, rounded corners, draw, fill=orange!20, minimum width=2.8cm, minimum height=1cm, font=\scriptsize, align=center] (action) at (5,-2) {\faCogs\ \textbf{Acción}\\Ejecutar en el entorno};
+        
+        \draw[->, thick] (brain) -- (plan);
+        \draw[->, thick] (plan) -- (brain);
+        \draw[->, thick] (brain) -- (mem);
+        \draw[->, thick] (mem) -- (brain);
+        \draw[->, thick] (brain) -- (tools);
+        \draw[->, thick] (tools) -- (brain);
+        \draw[->, thick] (brain) -- (action);
+        \draw[->, thick] (action) -- (brain);
+        
+        \node[rectangle, draw, dashed, gray, minimum width=4cm, minimum height=0.8cm, font=\scriptsize\color{gray}, align=center] (env) at (0,-3.5) {\faGlobe\ Entorno (APIs, archivos, web, bases de datos...)};
+        \draw[->, dashed, gray] (action) -- (env);
+        \draw[->, dashed, gray] (env) -- (tools);
+    \end{tikzpicture}
+\end{frame}
+%--- 7. Herramientas ---
+\begin{frame}{Herramientas (Tools): Las ``Manos'' del Agente}
+    \begin{block}{¿Por qué herramientas?}
+        Extienden las capacidades del LLM más allá del texto. El agente \textit{decide} cuándo y qué herramienta usar.
+    \end{block}
+    
+    \vspace{0.2cm}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.2}
+        \scriptsize
+        \begin{tabular}{p{2.5cm} p{4.5cm} p{4.5cm}}
+            \toprule
+            \textbf{Tipo} & \textbf{Ejemplos} & \textbf{Capacidad que agrega} \\
+            \midrule
+            Búsqueda & Google, Bing, Wikipedia & Información actualizada \\
+            Código & Python REPL, terminal & Cálculos exactos, lógica \\
+            APIs & Gmail, Slack, GitHub & Interacción con servicios \\
+            Bases de datos & SQL, vectoriales & Consultar conocimiento \\
+            Archivos & Leer/escribir archivos & Persistencia de datos \\
+            Navegador & Selenium, Playwright & Interacción web \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.2cm}
+    \textbf{Clave:} El LLM no ``ejecuta'' herramientas; genera un JSON indicando qué llamar. Un \textbf{runtime} externo ejecuta y devuelve el resultado.
+\end{frame}
+%--- 8. Loop de Acción ---
+\begin{frame}{El Loop de Acción: Pensar $\rightarrow$ Actuar $\rightarrow$ Observar}
+    \begin{block}{Idea Central}
+        Un agente no genera una sola respuesta: ejecuta un \textbf{loop} iterativo hasta completar la tarea.
+    \end{block}
+    
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \tikzset{
+            step/.style={rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm, draw, font=\scriptsize, align=center},
+            arrow/.style={thick, ->, >=stealth}
+        }
+        
+        \node[step, fill=blue!20] (think) at (0,0) {\faBrain\ \textbf{Pensar}\\¿Qué debo hacer?};
+        \node[step, fill=orange!20] (act) at (4.5,0) {\faPlay\ \textbf{Actuar}\\Usar herramienta};
+        \node[step, fill=green!20] (obs) at (9,0) {\faEye\ \textbf{Observar}\\Ver resultado};
+        
+        \draw[arrow] (think) -- (act);
+        \draw[arrow] (act) -- (obs);
+        \draw[arrow, dashed] (obs.south) -- ++(0,-0.8) -| node[below, font=\tiny, pos=0.25] {¿Terminé? No $\rightarrow$ repetir} (think.south);
+        
+        \node[step, fill=green!40, below=1.8cm of act] (done) {\faCheck\ \textbf{Respuesta Final}};
+        \draw[arrow] (obs.south) -- ++(0,-0.4) -- node[right, font=\tiny] {Sí} (done.east |- obs.south) -- (done.east);
+    \end{tikzpicture}
+    
+    \vspace{0.2cm}
+    \textbf{Diferencia clave:} Un LLM da una respuesta. Un agente puede dar \textbf{N pasos} antes de responder.
+\end{frame}
+%===========================================================
+% SECCIÓN 3: PATRÓN ReAct
+%===========================================================
+\section{El Patrón ReAct}
+%--- 9. ReAct ---
+\begin{frame}{ReAct: Reasoning + Acting}
+    \begin{block}{Paper Fundacional}
+        Yao et al., ``ReAct: Synergizing Reasoning and Acting in Language Models'' (2022). Combina Chain-of-Thought con uso de herramientas.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \tikzset{
+            rbox/.style={rectangle, rounded corners, minimum width=3cm, minimum height=0.8cm, draw, font=\scriptsize, align=center}
+        }
+        
+        \begin{scope}[xshift=-5cm]
+            \node[font=\small\bfseries] at (0,2.5) {Solo Razonamiento};
+            \node[rbox, fill=yellow!20] (t1) at (0,1.5) {Thought};
+            \node[rbox, fill=yellow!20] (t2) at (0,0.5) {Thought};
+            \node[rbox, fill=yellow!20] (t3) at (0,-0.5) {Thought};
+            \node[rbox, fill=green!20] (a1) at (0,-1.5) {Answer};
+            \draw[->, thick] (t1) -- (t2);
+            \draw[->, thick] (t2) -- (t3);
+            \draw[->, thick] (t3) -- (a1);
+            \node[below=0.2cm of a1, font=\tiny, text width=3cm, align=center] {Puede ``alucinar'' datos};
+        \end{scope}
+        
+        \begin{scope}
+            \node[font=\small\bfseries] at (0,2.5) {Solo Acción};
+            \node[rbox, fill=orange!20] (ac1) at (0,1.5) {Action};
+            \node[rbox, fill=green!20] (o1) at (0,0.5) {Observation};
+            \node[rbox, fill=orange!20] (ac2) at (0,-0.5) {Action};
+            \node[rbox, fill=green!20] (o2) at (0,-1.5) {Observation};
+            \draw[->, thick] (ac1) -- (o1);
+            \draw[->, thick] (o1) -- (ac2);
+            \draw[->, thick] (ac2) -- (o2);
+            \node[below=0.2cm of o2, font=\tiny, text width=3cm, align=center] {Sin dirección clara};
+        \end{scope}
+        
+        \begin{scope}[xshift=5cm]
+            \node[font=\small\bfseries] at (0,2.5) {ReAct};
+            \node[rbox, fill=yellow!20] (rt1) at (0,1.5) {Thought};
+            \node[rbox, fill=orange!20] (ra1) at (0,0.5) {Action};
+            \node[rbox, fill=green!20] (ro1) at (0,-0.5) {Observation};
+            \node[rbox, fill=yellow!20] (rt2) at (0,-1.5) {Thought...};
+            \draw[->, thick] (rt1) -- (ra1);
+            \draw[->, thick] (ra1) -- (ro1);
+            \draw[->, thick] (ro1) -- (rt2);
+            \node[below=0.2cm of rt2, font=\tiny, text width=3cm, align=center] {\textbf{Razona Y actúa}};
+        \end{scope}
+    \end{tikzpicture}
+\end{frame}
+%--- 10. ReAct Ejemplo ---
+\begin{frame}[fragile]{ReAct: Ejemplo Paso a Paso}
+    \textbf{Pregunta:} ``¿Quién es el presidente de la USAC en 2026?''
+    
+    \vspace{0.2cm}
+\begin{lstlisting}[style=xmlstyle]
+<thought>
+Necesito buscar quien es el rector actual de la USAC.
+No tengo esa informacion actualizada.
+</thought>
+<action>web_search("rector USAC 2026")</action>
+<observation>
+Resultado: "El Ing. Walter Mazariegos fue electo rector 
+de la USAC para el periodo 2022-2026..."
+</observation>
+<thought>
+Encontre la informacion. El rector de la USAC es 
+Walter Mazariegos. El usuario dijo "presidente" pero 
+en la USAC el cargo es "rector". Debo aclarar esto.
+</thought>
+<action>final_answer("El cargo en la USAC es Rector, 
+no Presidente. El Rector es el Ing. Walter 
+Mazariegos (periodo 2022-2026).")</action>
+\end{lstlisting}
+
+    \vspace{0.2cm}
+    Nótese cómo el agente \textbf{razona} entre cada acción y corrige la terminología del usuario.
+\end{frame}
+%===========================================================
+% SECCIÓN 4: ARQUITECTURAS DE AGENTES
+%===========================================================
+\section{Arquitecturas de Agentes}
+%--- 11. Agente Único ---
+\begin{frame}{Arquitectura 1: Agente Único con Herramientas}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \tikzset{
+            box/.style={rectangle, rounded corners, minimum width=2cm, minimum height=0.8cm, draw, font=\scriptsize, align=center},
+            tool/.style={rectangle, rounded corners, minimum width=1.5cm, minimum height=0.7cm, draw, fill=green!20, font=\tiny, align=center}
+        }
+        
+        \node[rectangle, draw, fill=gray!10, minimum width=8cm, minimum height=4cm, rounded corners] (container) at (0,0) {};
+        \node[above] at (container.north) {\scriptsize\textbf{Agente}};
+        
+        \node[box, fill=blue!20] (llm) at (0,0.5) {\faBrain\ LLM};
+        \node[box, fill=yellow!20] (loop) at (0,-0.8) {Loop ReAct};
+        
+        \draw[<->, thick] (llm) -- (loop);
+        
+        \node[tool] (t1) at (-5,1) {\faSearch\ Búsqueda};
+        \node[tool] (t2) at (-5,0) {\faCode\ Python};
+        \node[tool] (t3) at (-5,-1) {\faDatabase\ SQL};
+        \node[tool] (t4) at (5,1) {\faEnvelope\ Email};
+        \node[tool] (t5) at (5,0) {\faFileAlt\ Archivos};
+        \node[tool] (t6) at (5,-1) {\faCalculator\ Calculator};
+        
+        \draw[<->, gray] (container.west |- t1) -- (t1);
+        \draw[<->, gray] (container.west |- t2) -- (t2);
+        \draw[<->, gray] (container.west |- t3) -- (t3);
+        \draw[<->, gray] (container.east |- t4) -- (t4);
+        \draw[<->, gray] (container.east |- t5) -- (t5);
+        \draw[<->, gray] (container.east |- t6) -- (t6);
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \textbf{La más simple y común.} Un solo LLM con loop ReAct elige herramientas secuencialmente. Ideal para tareas que un ``generalista'' puede resolver.
+\end{frame}
+%--- 12. Agente Reflexivo ---
+\begin{frame}{Arquitectura 2: Agente Reflexivo}
+    \begin{block}{Idea}
+        El agente evalúa su propia salida y la refina con un loop de \textbf{autocrítica}.
+    \end{block}
+    
+    \centering
+    \begin{tikzpicture}[scale=0.8]
+        \tikzset{
+            step/.style={rectangle, rounded corners, minimum width=3cm, minimum height=0.9cm, draw, font=\scriptsize, align=center},
+            arrow/.style={thick, ->, >=stealth}
+        }
+        
+        \node[step, fill=blue!20] (gen) at (0,1.5) {Generar\\respuesta};
+        \node[step, fill=yellow!20] (eval) at (5,1.5) {Evaluar\\calidad};
+        \node[step, fill=red!20] (crit) at (5,-0.5) {Generar\\crítica};
+        \node[step, fill=orange!20] (refine) at (0,-0.5) {Refinar con\\base en crítica};
+        \node[step, fill=green!30] (final) at (2.5,-2.5) {\faCheck\ Respuesta final};
+        
+        \draw[arrow] (gen) -- (eval);
+        \draw[arrow] (eval) -- node[right, font=\tiny] {no satisfactorio} (crit);
+        \draw[arrow] (crit) -- (refine);
+        \draw[arrow] (refine) -- (gen);
+        \draw[arrow] (eval.south east) -- node[right, font=\tiny] {satisfactorio} (final);
+    \end{tikzpicture}
+    
+    \vspace{0.2cm}
+    \textbf{Paper:} Shinn et al., ``Reflexion: Language Agents with Verbal Reinforcement Learning'' (2023)
+\end{frame}
+%--- 13. Multi-Agente Jerárquico ---
+\begin{frame}{Arquitectura 3: Multi-Agente Jerárquico}
+    \centering
+    \begin{tikzpicture}[scale=0.85, transform shape]
+        \tikzset{
+            agent/.style={rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm, draw, font=\scriptsize, align=center}
+        }
+        
+        \node[agent, fill=red!20] (sup) at (0,2) {\faCrown\ \textbf{Supervisor}\\Planifica y delega};
+        
+        \node[agent, fill=blue!20] (w1) at (-4,0) {\faSearch\ \textbf{Investigador}\\Busca información};
+        \node[agent, fill=green!20] (w2) at (0,0) {\faPen\ \textbf{Escritor}\\Redacta contenido};
+        \node[agent, fill=yellow!20] (w3) at (4,0) {\faCheckDouble\ \textbf{Revisor}\\Verifica calidad};
+        
+        \draw[->, thick] (sup) -- (w1);
+        \draw[->, thick] (sup) -- (w2);
+        \draw[->, thick] (sup) -- (w3);
+        
+        \draw[->, dashed, gray] (w1) -- node[below, font=\tiny] {datos} (w2);
+        \draw[->, dashed, gray] (w2) -- node[below, font=\tiny] {borrador} (w3);
+        \draw[->, dashed, gray] (w3.north east) -- node[right, font=\tiny] {feedback} (sup.south east);
+        
+        \node[below=0.8cm of w2, font=\tiny, text width=8cm, align=center] {El \textbf{supervisor} decide qué agente trabaja en cada paso. Cada ``trabajador'' tiene su propio system prompt, herramientas y especialización. Ejemplo: ChatDev simula una empresa de software completa.};
+    \end{tikzpicture}
+\end{frame}
+%===========================================================
+% SECCIÓN 5: FRAMEWORKS
+%===========================================================
+\section{Frameworks y Herramientas}
+%--- 14. Frameworks ---
+\begin{frame}{Ecosistema de Frameworks para Agentes}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{2.5cm} p{4cm} p{4.5cm}}
+            \toprule
+            \textbf{Framework} & \textbf{Enfoque} & \textbf{Ideal para} \\
+            \midrule
+            LangGraph & Grafos de estado, control preciso & Flujos complejos, producción \\
+            CrewAI & Multi-agente con roles & Equipos de agentes colaborativos \\
+            AutoGen (Microsoft) & Conversación multi-agente & Investigación, prototipos \\
+            Smolagents (HuggingFace) & Minimalista, código & Agentes simples y rápidos \\
+            OpenAI Agents SDK & Integrado con GPT & Producción con OpenAI \\
+            Claude Tool Use & Nativo en Anthropic API & Producción con Claude \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.2cm}
+    \textbf{Tendencia 2025-2026:} De frameworks basados en ``chains'' lineales a \textbf{grafos de estado} donde cada nodo es un paso del agente y las aristas son decisiones.
+\end{frame}
+%--- 15. Tool Use Código ---
+\begin{frame}[fragile]{Ejemplo: Agente Mínimo con Tool Use}
+\begin{lstlisting}[style=codestyle]
+import anthropic
+
+client = anthropic.Anthropic()
+tools = [{
+    "name": "get_weather",
+    "description": "Obtiene el clima actual de una ciudad",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "city": {"type": "string",
+                     "description": "Nombre de la ciudad"}
+        },
+        "required": ["city"]
+    }
+}]
+
+response = client.messages.create(
+    model="claude-sonnet-4-5-20250514",
+    max_tokens=1024,
+    tools=tools,
+    messages=[{"role": "user",
+               "content": "Que clima hace en Guatemala hoy?"}]
+)
+# El modelo responde con un tool_use block:
+# {"type":"tool_use","name":"get_weather",
+#  "input":{"city":"Guatemala City"}}
+\end{lstlisting}
+\end{frame}
+%--- 16. Loop completo ---
+\begin{frame}[fragile]{El Loop Completo del Agente en Código}
+\begin{lstlisting}[style=codestyle]
+messages = [{"role": "user", "content": query}]
+
+while True:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        tools=tools, messages=messages
+    )
+    # Si el modelo quiere usar una herramienta
+    if response.stop_reason == "tool_use":
+        tool_call = response.content[-1]  # tool_use block
+        result = execute_tool(tool_call.name, tool_call.input)
+        # Agregar respuesta del modelo y resultado
+        messages.append({"role": "assistant",
+                         "content": response.content})
+        messages.append({"role": "user", "content": [{
+            "type": "tool_result",
+            "tool_use_id": tool_call.id,
+            "content": str(result)
+        }]})
+    else:  # El modelo dio respuesta final
+        print(response.content[0].text)
+        break
+\end{lstlisting}
+\end{frame}
+%--- 17. MCP ---
+\begin{frame}{Model Context Protocol (MCP)}
+    \begin{block}{¿Qué es MCP?}
+        Estándar abierto de Anthropic para conectar LLMs con herramientas externas de forma estandarizada. Es como un ``USB-C para la IA''.
+    \end{block}
+    
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \tikzset{
+            box/.style={rectangle, rounded corners, minimum width=2cm, minimum height=0.7cm, draw, font=\scriptsize, align=center}
+        }
+        
+        \node[box, fill=blue!20, minimum width=3cm] (app) at (0,0) {Aplicación\\(Host)};
+        
+        \node[box, fill=yellow!20] (mcp) at (0,-1.5) {Protocolo MCP};
+        
+        \node[box, fill=green!20] (s1) at (-4,-3) {Servidor\\Google Drive};
+        \node[box, fill=green!20] (s2) at (-1.3,-3) {Servidor\\GitHub};
+        \node[box, fill=green!20] (s3) at (1.3,-3) {Servidor\\Slack};
+        \node[box, fill=green!20] (s4) at (4,-3) {Servidor\\PostgreSQL};
+        
+        \draw[<->, thick] (app) -- (mcp);
+        \draw[<->, thick] (mcp) -- (s1);
+        \draw[<->, thick] (mcp) -- (s2);
+        \draw[<->, thick] (mcp) -- (s3);
+        \draw[<->, thick] (mcp) -- (s4);
+    \end{tikzpicture}
+    
+    \vspace{0.2cm}
+    \textbf{Ventaja:} Cada herramienta se implementa \textit{una vez} como servidor MCP y cualquier agente compatible puede usarla.
+\end{frame}
+%===========================================================
+% SECCIÓN 6: DESAFÍOS Y LIMITACIONES
+%===========================================================
+\section{Desafíos y Limitaciones}
+%--- 18. Desafíos ---
+\begin{frame}{Desafíos Actuales de los Agentes}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{alertblock}{1. Acumulación de Errores}
+            Cada paso puede introducir un error. En cadenas largas (10+ pasos), la probabilidad de éxito cae exponencialmente.
+        \end{alertblock}
+        
+        \begin{alertblock}{2. Costo Computacional}
+            Un agente puede hacer 20+ llamadas al LLM para una sola tarea. Los costos escalan rápidamente.
+        \end{alertblock}
+        
+        \column{0.48\textwidth}
+        \begin{alertblock}{3. Alucinaciones Amplificadas}
+            Si el agente ``alucina'' un resultado intermedio y actúa sobre él, las consecuencias son peores que una simple alucinación de texto.
+        \end{alertblock}
+        
+        \begin{alertblock}{4. Seguridad}
+            Un agente con acceso a email, archivos y APIs tiene poder real. Un prompt injection podría causar acciones destructivas.
+        \end{alertblock}
+    \end{columns}
+\end{frame}
+%--- 19. Confiabilidad ---
+\begin{frame}{Confiabilidad: El Gran Reto}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \draw[->] (0,0) -- (10,0) node[right, font=\scriptsize] {Pasos};
+        \draw[->] (0,0) -- (0,4.5) node[above, font=\scriptsize] {P(éxito total)};
+        
+        \node[left, font=\tiny] at (0,4) {100\%};
+        \node[left, font=\tiny] at (0,3) {75\%};
+        \node[left, font=\tiny] at (0,2) {50\%};
+        \node[left, font=\tiny] at (0,1) {25\%};
+        \draw[dotted, gray] (0,4) -- (10,4);
+        \draw[dotted, gray] (0,2) -- (10,2);
+        
+        \draw[thick, blue] plot[smooth] coordinates {(0,4) (1,3.8) (2,3.6) (3,3.44) (5,2.93) (7,2.49) (10,1.97)};
+        \node[blue, font=\tiny, right] at (10,1.97) {95\%/paso};
+        
+        \draw[thick, red] plot[smooth] coordinates {(0,4) (1,3.6) (2,3.24) (3,2.92) (5,2.36) (7,1.91) (10,1.39)};
+        \node[red, font=\tiny, right] at (10,1.39) {90\%/paso};
+        
+        \draw[thick, orange] plot[smooth] coordinates {(0,4) (1,3.2) (2,2.56) (3,2.05) (5,1.31) (7,0.84) (10,0.43)};
+        \node[orange, font=\tiny, right] at (10,0.43) {80\%/paso};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    Si cada paso tiene 90\% de éxito, después de 10 pasos: $0.9^{10} \approx 35\%$ de éxito total.
+    
+    \vspace{0.2cm}
+    \textbf{Implicación:} Para agentes confiables, cada paso individual debe ser \textit{extremadamente} robusto.
+\end{frame}
+%===========================================================
+% SECCIÓN 7: CASOS DE USO Y EJERCICIOS
+%===========================================================
+\section{Casos de Uso y Ejercicios}
+%--- 20. Casos de uso ---
+\begin{frame}{Agentes en el Mundo Real (2025-2026)}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{2.5cm} p{3.5cm} p{5.5cm}}
+            \toprule
+            \textbf{Producto} & \textbf{Empresa} & \textbf{Qué hace} \\
+            \midrule
+            Claude Code & Anthropic & Agente de coding en terminal \\
+            Devin & Cognition & Ingeniero de software autónomo \\
+            Computer Use & Anthropic/OpenAI & Agente que controla una computadora \\
+            Deep Research & Google/OpenAI & Investigación profunda con múltiples búsquedas \\
+            Operator & OpenAI & Agente web que navega por ti \\
+            Cursor Agent & Cursor & Agente que edita código multi-archivo \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.2cm}
+    \textbf{Tendencia clave:} Los agentes están pasando de demos impresionantes a herramientas de productividad reales. La confiabilidad es lo que separa un demo de un producto.
+\end{frame}
+%--- 21. Ejercicios ---
+\begin{frame}{Ejercicios Propuestos}
+    \begin{enumerate}
+        \setlength\itemsep{0.5em}
+        \item \textbf{ReAct Manual:} Dado el problema ``¿Cuál es la población combinada de las 3 ciudades más grandes de Guatemala?'', escribe la traza completa Thought/Action/Observation que seguiría un agente.
+        
+        \item \textbf{Diseño de Herramientas:} Define 4 herramientas (nombre, descripción, parámetros) para un agente que ayuda a estudiantes a planificar su horario de clases en la USAC.
+        
+        \item \textbf{Multi-Agente:} Diseña una arquitectura multi-agente para automatizar la revisión de tareas de programación. Define roles, herramientas y flujo de comunicación.
+        
+        \item \textbf{Análisis de Riesgo:} Identifica 5 posibles fallas de un agente con acceso a tu correo electrónico y propón una mitigación para cada una.
+        
+        \item \textbf{(Bonus)} Implementar un agente mínimo usando la API de Claude con tool use que pueda hacer cálculos y búsquedas.
+    \end{enumerate}
+\end{frame}
+%--- 22. Recursos ---
+\begin{frame}{Recursos Adicionales}
+    \textbf{Papers fundamentales:}
+    \begin{itemize}
+        \item Yao et al., ``ReAct: Synergizing Reasoning and Acting in LMs'' (2022)
+        \item Shinn et al., ``Reflexion: Verbal Reinforcement Learning'' (2023)
+        \item Qian et al., ``ChatDev: Communicative Agents for Software Development'' (2023)
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Documentación y herramientas:}
+    \begin{itemize}
+        \item Anthropic: Tool Use y MCP (docs.anthropic.com)
+        \item LangGraph y CrewAI: Documentación oficial
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Para la próxima clase:}
+    \begin{itemize}
+        \item Clase 20: Uso de APIs para conectar LLMs con el mundo real
+        \item Traer: laptop con Python instalado y API key configurada
+    \end{itemize}
+\end{frame}
+%===========================================================
+% SECCIÓN 8: AI INDEX REPORT 2026
+%===========================================================
+\section{AI Index Report 2026: Estado de los Agentes}
+%--- 23. AI Index - Rendimiento ---
+\begin{frame}{AI Index Report 2026: Rendimiento de Agentes}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{\faRocket\ Promesa vs.\ tareas prolongadas}
+            \scriptsize
+            En \textbf{RE-Bench}, con 2h de límite los agentes superan a expertos humanos con puntuaciones \textbf{4$\times$ mayores}. Pero con 32h, los humanos los superan \textbf{2 a 1}. En tareas específicas (kernels de Triton) ya igualan expertos en velocidad y costo.
+        \end{block}
+        
+        \begin{block}{\faTasks\ Progreso masivo como asistentes}
+            \scriptsize
+            En \textbf{GAIA} (razonamiento + web + herramientas): 2023: GPT-4 con plugins $\rightarrow$ \textbf{15\%} éxito (humanos: 92\%). 2024: mejor sistema $\rightarrow$ \textbf{65.1\%}.
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{\faDesktop\ No listos para entornos visuales}
+            \scriptsize
+            \textbf{VisualAgentBench}: entornos domésticos, videojuegos (Minecraft), GUIs web/móviles. Mejor modelo (GPT-4o): solo \textbf{36.2\%} de éxito. Promedio: \textbf{$\sim$20\%}.
+        \end{block}
+        
+        \begin{block}{\faFlask\ Descubrimientos científicos autónomos}
+            \scriptsize
+            ``Laboratorio virtual'' de Stanford: agentes LLM diseñaron \textbf{92 anticuerpos} contra SARS-CoV-2 con tasa de unión \textbf{>90\%}. El proyecto \textbf{Aviary} demostró que agentes con herramientas superan modelos estándar en manipulación de ADN.
+        \end{block}
+    \end{columns}
+\end{frame}
+%--- 24. AI Index - Riesgos e Impacto ---
+\begin{frame}{AI Index Report 2026: Riesgos e Impacto Comercial}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{alertblock}{\faExclamationTriangle\ Jailbreaks infecciosos}
+            \scriptsize
+            Comprometer la memoria de \textbf{un solo agente} puede desencadenar fallo sistémico. En simulaciones con \textbf{1 millón de agentes}, el jailbreak se propagó a casi toda la red en solo \textbf{27-31 rondas}, sin intervención humana adicional.
+        \end{alertblock}
+        
+        \begin{alertblock}{\faBug\ Errores críticos con herramientas}
+            \scriptsize
+            En \textbf{ToolEmu}, incluso agentes optimizados para seguridad fallaron en el \textbf{23.9\%} de escenarios críticos: comandos peligrosos, desvío de transacciones, fallos en control de tráfico.
+        \end{alertblock}
+        
+        \column{0.48\textwidth}
+        \begin{exampleblock}{\faBriefcase\ Impacto comercial y laboral}
+            \scriptsize
+            Salesforce lanzó \textbf{Agentforce} (2024): suite de agentes autónomos para operaciones comerciales. Según LinkedIn, ``agentes de IA'' es una de las \textbf{habilidades de más rápido crecimiento} en ingeniería de IA a nivel mundial.
+        \end{exampleblock}
+        
+        \vspace{0.3cm}
+        \begin{block}{\faBalanceScale\ Conclusión del Reporte}
+            \scriptsize
+            Los agentes son la frontera más emocionante de la IA. La brecha entre \textbf{capacidad} y \textbf{confiabilidad} sigue siendo el reto central antes de su despliegue masivo.
+        \end{block}
+    \end{columns}
+\end{frame}
+%--- 25. Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``An agent is just an LLM that you put in a while loop.''\\--- Simon Willison}
+\end{frame}
+\end{document}

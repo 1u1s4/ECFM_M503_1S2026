@@ -1,0 +1,699 @@
+\documentclass[aspectratio=169]{beamer}
+
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{listings}
+\usepackage{amsmath}
+
+% Librerías de TikZ (Cargadas una sola vez)
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, decorations.pathreplacing}
+
+%--- Configuración de Listings ---
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{green!60!black},
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false
+}
+
+\lstdefinestyle{sqlstyle}{
+    language=SQL,
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{blue}\bfseries,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false
+}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 10]{Programación Matemática 2}
+\subtitle{Clase 10: Bases de Datos Vectoriales para IA}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: INTRODUCCIÓN
+%===========================================================
+\section{¿Por Qué una Nueva Clase de Base de Datos?}
+
+\begin{frame}{Recapitulación: SQL vs NoSQL (Clase 9)}
+
+    % Usamos columnas para distribuir el contenido horizontalmente
+    \begin{columns}[t] % [t] alinea el contenido arriba
+        
+        % COLUMNA 1: SQL (Usamos 'block' estándar - Azul)
+        \begin{column}{0.32\textwidth}
+            \begin{block}{SQL}
+                \centering
+                \small
+                Filas y columnas\\[0.1cm]
+                \footnotesize Búsqueda exacta
+            \end{block}
+        \end{column}
+        
+        % COLUMNA 2: NoSQL (Usamos 'exampleblock' - Verde)
+        \begin{column}{0.32\textwidth}
+            \begin{exampleblock}{NoSQL}
+                \centering
+                \small
+                Documentos, K-V\\[0.1cm]
+                \footnotesize Esquema flexible
+            \end{exampleblock}
+        \end{column}
+        
+        % COLUMNA 3: Vectorial (Usamos 'alertblock' - Rojo/Destacado)
+        \begin{column}{0.32\textwidth}
+            \begin{alertblock}{Vectorial \hfill \scriptsize ¡NUEVO!}
+                \centering
+                \small
+                Vectores numéricos\\[0.1cm]
+                \footnotesize \textbf{Búsqueda por similitud}
+            \end{alertblock}
+        \end{column}
+        
+    \end{columns}
+    
+    \vspace{0.5cm}
+    
+    \begin{block}{El Problema}
+        SQL y NoSQL buscan coincidencias \textbf{exactas}. Pero en IA necesitamos buscar cosas \textbf{similares} o \textbf{relacionadas semánticamente}.
+    \end{block}
+    
+\end{frame}
+
+\begin{frame}{El Problema: Búsqueda Exacta vs Semántica}
+    \centering
+    \begin{tikzpicture}[node distance=0.6cm]
+        \tikzstyle{query} = [rectangle, rounded corners, fill=blue!20, minimum width=8cm, minimum height=0.7cm, font=\scriptsize]
+        \tikzstyle{good} = [rectangle, rounded corners, fill=green!20, minimum width=8cm, minimum height=0.7cm, font=\scriptsize]
+        \tikzstyle{bad} = [rectangle, rounded corners, fill=red!20, minimum width=8cm, minimum height=0.7cm, font=\scriptsize]
+        
+        \node (q) [query] {Búsqueda: ``problemas de rendimiento en Python''};
+        
+        \node (r1) [good, below=0.4cm of q] {\faCheck \ ``Cómo optimizar código Python lento''};
+        \node (r2) [good, below=0.2cm of r1] {\faCheck \ ``Mejores prácticas de performance en Python''};
+        \node (r3) [bad, below=0.2cm of r2] {\faTimes \ SQL: No encuentra (no tiene las palabras exactas)};
+    \end{tikzpicture}
+    
+    \vspace{0.4cm}
+    \textbf{Con SQL tradicional:}
+    \begin{itemize}
+        \item \texttt{WHERE texto LIKE '\%rendimiento\%'} - Solo coincidencia textual
+        \item No entiende que ``rendimiento'' $\approx$ ``performance'' $\approx$ ``optimizar''
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{La Solución: Representar Datos como Vectores}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \textbf{Idea fundamental:}
+        \begin{itemize}
+            \item Convertir texto (u otros datos) a \textbf{vectores numéricos}
+            \item Vectores similares = significados similares
+            \item Buscar por \textbf{distancia} en lugar de coincidencia exacta
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{¿Qué es un vector?}
+        \begin{itemize}
+            \item Una lista de números: $[0.2, -0.5, 0.8, ...]$
+            \item Típicamente 384 a 3072 dimensiones
+            \item Cada dimensión captura algún ``aspecto'' del significado
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.75]
+            % 2D simplified space
+            \draw[->] (0,0) -- (4.5,0) node[right, font=\scriptsize] {};
+            \draw[->] (0,0) -- (0,4.5) node[above, font=\scriptsize] {};
+            
+            % Clusters
+            \fill[blue!30, opacity=0.5] (1,3.5) circle (0.7);
+            \fill[green!30, opacity=0.5] (3.5,1) circle (0.7);
+            \fill[orange!30, opacity=0.5] (3,3) circle (0.5);
+            
+            % Points
+            \fill[blue] (0.8,3.3) circle (3pt) node[left, font=\tiny] {perro};
+            \fill[blue] (1.2,3.7) circle (3pt) node[right, font=\tiny] {gato};
+            
+            \fill[green] (3.3,0.8) circle (3pt) node[below, font=\tiny] {auto};
+            \fill[green] (3.7,1.2) circle (3pt) node[right, font=\tiny] {moto};
+            
+            \fill[orange] (2.9,2.9) circle (3pt) node[left, font=\tiny] {pizza};
+            \fill[orange] (3.1,3.1) circle (3pt) node[right, font=\tiny] {pasta};
+            
+            \node[below, font=\scriptsize] at (2.2,-0.3) {Espacio vectorial (simplificado)};
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Embeddings: Vectores con Significado}
+    \begin{block}{Definición (Simplificada)}
+        Un \textbf{embedding} es un vector numérico que representa el ``significado'' de un dato (texto, imagen, audio). Datos similares tienen vectores cercanos.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \centering
+    \begin{tikzpicture}[scale=0.9]
+        \tikzstyle{text} = [rectangle, rounded corners, fill=blue!20, minimum width=2cm, minimum height=0.7cm, font=\scriptsize]
+        \tikzstyle{vector} = [rectangle, rounded corners, fill=green!20, minimum width=3.5cm, minimum height=0.7cm, font=\scriptsize]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (t1) [text] {``Rey''};
+        \node (v1) [vector, right=1.5cm of t1] {[0.21, 0.85, -0.12, ...]};
+        
+        \node (t2) [text, below=0.6cm of t1] {``Reina''};
+        \node (v2) [vector, right=1.5cm of t2] {[0.23, 0.82, -0.09, ...]};
+        
+        \node (t3) [text, below=0.6cm of t2] {``Automóvil''};
+        \node (v3) [vector, right=1.5cm of t3] {[0.91, -0.45, 0.73, ...]};
+        
+        \draw [arrow] (t1) -- node[above, font=\tiny] {Modelo} (v1);
+        \draw [arrow] (t2) -- node[above, font=\tiny] {Embedding} (v2);
+        \draw [arrow] (t3) -- (v3);
+        
+        % Similarity bracket
+        \draw [decorate, decoration={brace, amplitude=5pt}] ([xshift=0.2cm]v1.east) -- ([xshift=0.2cm]v2.east) node[midway, right=0.3cm, font=\tiny] {Muy similares};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Nota}
+        En la \textbf{Clase 16} profundizaremos en cómo funcionan los modelos que generan embeddings. Por ahora, solo necesitamos saber que existen y qué producen.
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: FUNDAMENTOS MATEMÁTICOS
+%===========================================================
+\section{Matemáticas de la Similitud Vectorial}
+
+\begin{frame}{¿Cómo Medir Similitud entre Vectores?}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Distancia Euclidiana}
+            \[
+            d(\vec{a}, \vec{b}) = \sqrt{\sum_{i=1}^{n}(a_i - b_i)^2}
+            \]
+            \begin{itemize}
+                \item Distancia ``en línea recta''
+                \item \textbf{Menor} = más similar
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Similitud Coseno}
+            \[
+            \cos(\theta) = \frac{\vec{a} \cdot \vec{b}}{||\vec{a}|| \cdot ||\vec{b}||}
+            \]
+            \begin{itemize}
+                \item Mide el ángulo entre vectores
+                \item \textbf{Mayor} = más similar (máx = 1)
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    
+    \vspace{0.4cm}
+    \begin{alertblock}{En la práctica}
+        La \textbf{similitud coseno} es la más usada para embeddings de texto porque ignora la magnitud y solo considera la ``dirección'' del significado.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{Visualización de Métricas}
+    \centering
+    \begin{tikzpicture}[scale=1.1]
+        % Euclidean
+        \begin{scope}[xshift=0cm]
+            \draw[->] (0,0) -- (3,0);
+            \draw[->] (0,0) -- (0,3);
+            
+            \draw[->, thick, blue] (0,0) -- (1,2.5) node[above, font=\scriptsize] {$\vec{a}$};
+            \draw[->, thick, red] (0,0) -- (2.5,1) node[right, font=\scriptsize] {$\vec{b}$};
+            \draw[thick, green!60!black, dashed] (1,2.5) -- (2.5,1);
+            \node[green!60!black, font=\tiny] at (2,2) {distancia};
+            
+            \node[below, font=\scriptsize\bfseries] at (1.5,-0.4) {Euclidiana};
+        \end{scope}
+        
+        % Cosine
+        \begin{scope}[xshift=5.5cm]
+            \draw[->] (0,0) -- (3,0);
+            \draw[->] (0,0) -- (0,3);
+            
+            \draw[->, thick, blue] (0,0) -- (1,2.5) node[above, font=\scriptsize] {$\vec{a}$};
+            \draw[->, thick, red] (0,0) -- (2.5,1) node[right, font=\scriptsize] {$\vec{b}$};
+            
+            % Angle arc
+            \draw[thick, green!60!black] (0.35,0.14) arc (21.8:68.2:0.38);
+            \node[green!60!black, font=\scriptsize] at (0.7,0.7) {$\theta$};
+            
+            \node[below, font=\scriptsize\bfseries] at (1.5,-0.4) {Coseno (ángulo)};
+        \end{scope}
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \textbf{Ejemplo numérico:}\\
+    $\vec{a} = [1, 2, 3]$, $\vec{b} = [2, 4, 6]$ \\
+    Coseno = 1.0 (idéntica dirección, aunque $\vec{b}$ es el doble de largo)
+\end{frame}
+
+\begin{frame}{El Desafío: Búsqueda en Alta Dimensionalidad}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \textbf{El problema:}
+        \begin{itemize}
+            \item Embeddings típicos: 384 - 3072 dimensiones
+            \item Base de datos: millones de vectores
+            \item Comparar con TODOS: $O(n \times d)$ = ¡muy lento!
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Solución: Approximate Nearest Neighbors (ANN)}
+        \begin{itemize}
+            \item No busca el \textbf{exacto} más cercano
+            \item Busca \textbf{aproximadamente} los más cercanos
+            \item 100-1000x más rápido
+            \item Precisión típica: 95-99\%
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.75]
+            \draw[->] (0,0) -- (0,4.5) node[above, font=\scriptsize] {Tiempo};
+            \draw[->] (0,0) -- (5,0) node[right, font=\scriptsize] {Vectores};
+            
+            % Exact search
+            \draw[thick, red] (0.3,0.1) .. controls (2,1.5) and (3.5,3) .. (4.5,4);
+            \node[red, font=\tiny] at (4.8,3.7) {Exacta};
+            
+            % ANN search
+            \draw[thick, green!60!black] (0.3,0.1) .. controls (2,0.3) and (3.5,0.5) .. (4.5,0.7);
+            \node[green!60!black, font=\tiny] at (4.8,1) {ANN};
+            
+            \node[font=\tiny] at (1.5,-0.4) {100K};
+            \node[font=\tiny] at (3,-0.4) {1M};
+            \node[font=\tiny] at (4.5,-0.4) {10M};
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Algoritmos de Indexación}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{HNSW}
+            \textbf{H}ierarchical \textbf{N}avigable \textbf{S}mall \textbf{W}orld
+            \begin{itemize}
+                \item Estructura de grafo multicapa
+                \item Muy rápido en consultas
+                \item El más popular actualmente
+                \item Usa más memoria
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{IVF}
+            \textbf{I}nverted \textbf{F}ile Index
+            \begin{itemize}
+                \item Agrupa vectores en clusters
+                \item Solo busca en clusters cercanos
+                \item Menos memoria que HNSW
+                \item Bueno para datasets muy grandes
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    
+    \vspace{0.4cm}
+    \begin{exampleblock}{En la práctica}
+        La mayoría de bases de datos vectoriales usan \textbf{HNSW} por defecto. No necesitas implementar estos algoritmos, solo entender que existen.
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: BASES DE DATOS VECTORIALES
+%===========================================================
+\section{Bases de Datos Vectoriales Populares}
+
+\begin{frame}{Panorama Actual}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{2.2cm} p{2cm} p{2cm} p{2.2cm} p{3.5cm}}
+            \toprule
+            \textbf{Base de Datos} & \textbf{Tipo} & \textbf{Licencia} & \textbf{Índice} & \textbf{Mejor para} \\
+            \midrule
+            Pinecone & Solo cloud & Comercial & Propietario & Producción sin infraestructura \\
+            Weaviate & Ambos & Open Source & HNSW & Búsqueda híbrida \\
+            Qdrant & Ambos & Open Source & HNSW & Filtros complejos \\
+            Milvus & Self-hosted & Open Source & Varios & Escala masiva \\
+            Chroma & Embebido & Open Source & HNSW & Prototipado rápido \\
+            pgvector & Extensión PG & Open Source & IVF/HNSW & Ya usas PostgreSQL \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.2cm}
+    \begin{alertblock}{Recomendación para el curso}
+        Empezar con \textbf{Chroma} (simple, embebido) o \textbf{pgvector} (si ya saben PostgreSQL de la clase 9).
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}[fragile]{Chroma: La Opción más Simple}
+\begin{lstlisting}[style=pythonstyle]
+# pip install chromadb sentence-transformers
+import chromadb
+
+# Crear cliente (en memoria)
+client = chromadb.Client()
+
+# Crear coleccion (equivalente a una "tabla")
+collection = client.create_collection(
+    name="mis_documentos",
+    metadata={"hnsw:space": "cosine"}  # metrica de similitud
+)
+
+# Los embeddings se generan automaticamente con un modelo por defecto
+# (Veremos como funcionan estos modelos en la Clase 16)
+\end{lstlisting}
+
+\vspace{0.2cm}
+\textbf{Características de Chroma:}
+\begin{itemize}
+    \item Sin servidor (embebido en tu aplicación)
+    \item Genera embeddings automáticamente
+    \item Perfecto para desarrollo y aprendizaje
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Chroma: Operaciones CRUD}
+\begin{lstlisting}[style=pythonstyle]
+# INSERTAR documentos
+collection.add(
+    documents=[
+        "Python es un lenguaje de programacion",
+        "Machine learning usa algoritmos para aprender",
+        "Las bases de datos almacenan informacion"
+    ],
+    metadatas=[{"tipo": "prog"}, {"tipo": "ia"}, {"tipo": "db"}],
+    ids=["doc1", "doc2", "doc3"]
+)
+
+# BUSCAR por similitud semantica
+resultados = collection.query(
+    query_texts=["inteligencia artificial"],
+    n_results=2  # top 2 mas similares
+)
+print(resultados["documents"])
+# [['Machine learning usa algoritmos...', 'Las bases de datos...']]
+
+# BUSCAR con filtro de metadatos
+resultados = collection.query(
+    query_texts=["codigo"],
+    where={"tipo": "prog"},
+    n_results=1
+)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{pgvector: Vectores en PostgreSQL}
+    \textbf{Si ya conocen PostgreSQL (Clase 9), pueden agregar capacidades vectoriales:}
+    
+\begin{lstlisting}[style=sqlstyle]
+-- Instalar la extension
+CREATE EXTENSION vector;
+
+-- Crear tabla con columna vectorial
+CREATE TABLE documentos (
+    id SERIAL PRIMARY KEY,
+    contenido TEXT,
+    embedding vector(384)  # 384 dimensiones
+);
+
+-- Insertar (el embedding viene de Python)
+INSERT INTO documentos (contenido, embedding) 
+VALUES ('Texto de ejemplo', '[0.1, 0.2, 0.3, ...]');
+
+-- Buscar los 5 mas similares (operador <=> = distancia coseno)
+SELECT contenido, embedding <=> '[0.1, 0.2, ...]' AS distancia
+FROM documentos
+ORDER BY distancia
+LIMIT 5;
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{pgvector: Creando Índices}
+\begin{lstlisting}[style=sqlstyle]
+-- Indice IVF para busquedas rapidas
+CREATE INDEX ON documentos 
+USING ivfflat (embedding vector_cosine_ops)
+WITH (lists = 100);  # numero de clusters
+
+-- Indice HNSW (mas rapido, mas memoria)
+CREATE INDEX ON documentos 
+USING hnsw (embedding vector_cosine_ops)
+WITH (m = 16, ef_construction = 64);
+\end{lstlisting}
+
+\vspace{0.3cm}
+\textbf{Ventajas de pgvector:}
+\begin{itemize}
+    \item Usa tu infraestructura PostgreSQL existente
+    \item Combina búsqueda vectorial con SQL tradicional
+    \item JOINs con otras tablas relacionales
+    \item Transacciones ACID
+\end{itemize}
+\end{frame}
+
+
+
+%===========================================================
+% SECCIÓN 4: CASOS DE USO
+%===========================================================
+\section{Casos de Uso en IA}
+
+\begin{frame}{¿Para Qué Sirven las Bases Vectoriales?}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Búsqueda Semántica}
+            \begin{itemize}
+                \item Buscar documentos por significado
+                \item ``Encuentra artículos sobre cambio climático'' (sin esas palabras exactas)
+                \item Motores de búsqueda internos
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Sistemas de Recomendación}
+            \begin{itemize}
+                \item ``Usuarios que vieron esto...''
+                \item Productos similares
+                \item Contenido personalizado
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Detección de Duplicados}
+            \begin{itemize}
+                \item Encontrar contenido casi idéntico
+                \item Detección de plagio
+                \item Deduplicación de datos
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{RAG para LLMs}
+            \begin{itemize}
+                \item Dar contexto a modelos de lenguaje
+                \item Chatbots con conocimiento específico
+                \item \textit{(Lo veremos en detalle en Clase 18)}
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Ejemplo: Sistema de Búsqueda de Documentos}
+
+    % Definimos un comando rápido para las cajitas de colores
+    % Uso: \caja{color}{texto}
+    \newcommand{\caja}[2]{%
+        \colorbox{#1}{\parbox[c][0.8cm][c]{2cm}{\centering \scriptsize #2}}%
+    }
+
+    %--- FLUJO 1: INGESTA ---
+    \begin{block}{1. Fase de Ingesta (Preparación)}
+        \centering
+        \caja{blue!20}{Documentos\\(PDF, TXT)}
+        $\xrightarrow{\text{dividir}}$
+        \caja{yellow!20}{Fragmentos\\(Chunks)}
+        $\xrightarrow{\text{modelo}}$
+        \caja{orange!20}{Generar\\Embeddings}
+        $\rightarrow$
+        \caja{green!20}{Guardar en\\BD Vectorial}
+    \end{block}
+
+    \vspace{0.2cm}
+    \centering \faArrowDown \hspace{0.2cm} \textit{\scriptsize Los datos persisten aquí}
+    \vspace{0.2cm}
+
+    %--- FLUJO 2: CONSULTA ---
+    \begin{alertblock}{2. Fase de Consulta (Uso)}
+        \centering
+        \caja{purple!20}{Consulta\\Usuario}
+        $\xrightarrow{\text{modelo}}$
+        \caja{orange!20}{Embedding\\Consulta}
+        $\xrightarrow{\text{similitud}}$
+        \caja{green!20}{Búsqueda\\(KNN/ANN)}
+        $\rightarrow$
+        \caja{red!20}{Resultados\\Relevantes}
+    \end{alertblock}
+
+\end{frame}
+
+%===========================================================
+% SECCIÓN 5: COMPARACIÓN Y SELECCIÓN
+%===========================================================
+\section{Comparación con SQL/NoSQL}
+
+\begin{frame}{SQL vs NoSQL vs Vectorial}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{2.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
+            \toprule
+            \textbf{Aspecto} & \textbf{SQL} & \textbf{NoSQL} & \textbf{Vectorial} \\
+            \midrule
+            Tipo de búsqueda & Exacta, rangos & Exacta, texto completo & Por similitud \\
+            Estructura & Tablas rígidas & Flexible & Vectores + metadatos \\
+            Mejor para & Transacciones, reportes & Documentos, escala & Búsqueda semántica \\
+            Ejemplo query & \texttt{WHERE x = 5} & \texttt{find(\{x: 5\})} & \texttt{similar\_to(vec)} \\
+            Índices & B-tree, Hash & B-tree, texto & HNSW, IVF \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{No son excluyentes}
+        En aplicaciones reales se usan \textbf{juntas}: PostgreSQL para usuarios y transacciones + BD vectorial para búsqueda de contenido.
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{¿Cuándo Usar Cada Una?}
+    \centering
+    \begin{tikzpicture}[node distance=1.2cm, scale=0.85, transform shape]
+        \tikzstyle{decision} = [diamond, draw, fill=yellow!20, text width=2.2cm, text centered, inner sep=1pt, font=\scriptsize]
+        \tikzstyle{result} = [rectangle, rounded corners, draw, minimum width=2cm, minimum height=0.7cm, font=\scriptsize]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (start) [decision] {¿Qué tipo de búsqueda?};
+        
+        \node (exact) [result, fill=blue!20, below left=1.2cm and 2cm of start] {SQL / NoSQL};
+        \node (semantic) [decision, below right=1.2cm and 2cm of start] {¿Escala?};
+        
+        \node (small) [result, fill=green!20, below left=1cm and 0cm of semantic] {Chroma\\pgvector};
+        \node (large) [result, fill=purple!20, below right=1cm and 0cm of semantic] {Pinecone\\Milvus};
+        
+        \draw [arrow] (start) -- node[left, font=\tiny] {Exacta} (exact);
+        \draw [arrow] (start) -- node[right, font=\tiny] {Semántica} (semantic);
+        \draw [arrow] (semantic) -- node[left, font=\tiny] {$<$1M vectores} (small);
+        \draw [arrow] (semantic) -- node[right, font=\tiny] {$>$1M vectores} (large);
+    \end{tikzpicture}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 6: EJERCICIOS
+%===========================================================
+\section{Ejercicios Propuestos}
+
+\begin{frame}{Ejercicios}
+    \begin{enumerate}
+        \setlength\itemsep{0.6em}
+        \item \textbf{Instalación:} Instalar Chroma (\texttt{pip install chromadb}) y crear una colección con 10 frases sobre diferentes temas. Hacer búsquedas y observar los resultados.
+        
+        \item \textbf{Similitud manual:} Calcular a mano la similitud coseno entre los vectores $[1, 2, 3]$ y $[2, 4, 6]$. ¿Y entre $[1, 0, 0]$ y $[0, 1, 0]$?
+        
+        \item \textbf{pgvector:} Si tienen PostgreSQL instalado, agregar la extensión pgvector y crear una tabla con vectores. Comparar con Chroma.
+        
+        \item \textbf{Experimentación:} Agregar 100+ documentos a Chroma. ¿Cómo cambia el tiempo de búsqueda? ¿Y con 1000?
+        
+        \item \textbf{(Bonus)} Investigar: ¿Qué es ``hybrid search'' y por qué combina búsqueda vectorial con búsqueda de texto tradicional?
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Recursos Adicionales}
+    \textbf{Documentación oficial:}
+    \begin{itemize}
+        \item Chroma: \texttt{docs.trychroma.com}
+        \item pgvector: \texttt{github.com/pgvector/pgvector}
+        \item Pinecone: \texttt{docs.pinecone.io}
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Para practicar embeddings (Clase 16):}
+    \begin{itemize}
+        \item Sentence Transformers: \texttt{sbert.net}
+        \item Hugging Face MTEB Leaderboard
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Próximos temas relacionados:}
+    \begin{itemize}
+        \item Clase 16: Cómo funcionan los modelos de embeddings
+        \item Clase 18: RAG - Usar bases vectoriales con LLMs
+    \end{itemize}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.6cm}
+    \large
+    \textbf{Fin de la Unidad 1}\\[0.3cm]
+    \normalsize
+    Próxima clase iniciamos \textbf{Unidad 2: Ingeniería de IA y LLMs}\\
+    \textbf{Clase 11:} Historia de la IA: Del Perceptrón a las Redes Neuronales
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.4cm}
+    \footnotesize
+    \textit{``Similarity is the new equality.''}
+\end{frame}
+
+\end{document}

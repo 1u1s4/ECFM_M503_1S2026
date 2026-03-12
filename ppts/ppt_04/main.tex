@@ -1,0 +1,748 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fontawesome5}
+\usetikzlibrary{shapes.geometric, arrows, positioning}
+
+%--- Configuración de Listings para Python ---
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{promptcolor}{rgb}{0.0,0.4,0.6}
+
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=Python,
+    morekeywords={self, True, False, None, class, def, return, if, else, elif, for, while, in, and, or, not, lambda, async, await}
+}
+
+\lstdefinestyle{promptstyle}{
+    backgroundcolor=\color{blue!5},
+    basicstyle=\ttfamily\scriptsize\color{promptcolor},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{blue!30},
+}
+
+\lstset{style=pythonstyle}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 4]{Programación Matemática 2}
+\subtitle{Clase 4: Introducción al Vibe Coding\\Entornos Asistidos por IA}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: INTRODUCCIÓN AL VIBE CODING
+%===========================================================
+\section{¿Qué es el Vibe Coding?}
+
+\begin{frame}{El Origen del Término}
+    \begin{block}{Definición (Andrej Karpathy, 2025)}
+        \textbf{``Vibe Coding''} es un estilo de programación donde el desarrollador se entrega a las vibes del código, acepta exponenciales, y olvida que el código siquiera existe.
+    \end{block}
+    \vspace{0.3cm}
+    
+    \begin{alertblock}{En la Práctica}
+        Se describe completamente lo que se desea construir en lenguaje natural, y la IA genera el código. El rol del programador pasa de \textit{escribir} código a \textit{orquestar} y \textit{validar} código.
+    \end{alertblock}
+    \vspace{0.3cm}
+
+\end{frame}
+
+\begin{frame}{Evolución de la Programación}
+    \centering
+    \begin{tikzpicture}[node distance=1.8cm, auto]
+        \tikzstyle{era} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm, text centered, draw=black, fill=blue!20]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (era1) [era] {1950s-70s\\Código Máquina};
+        \node (era2) [era, right=0.8cm of era1] {1980s-90s\\Alto Nivel};
+        \node (era3) [era, right=0.8cm of era2] {2000s-10s\\Frameworks};
+        \node (era4) [era, right=0.8cm of era3, fill=green!30] {2020s+\\Vibe Coding};
+        
+        \draw [arrow] (era1) -- (era2);
+        \draw [arrow] (era2) -- (era3);
+        \draw [arrow] (era3) -- (era4);
+        
+        \node [below=0.3cm of era1, font=\tiny] {Assembly};
+        \node [below=0.3cm of era2, font=\tiny] {C, Java, Python};
+        \node [below=0.3cm of era3, font=\tiny] {React, Django};
+        \node [below=0.3cm of era4, font=\tiny] {Copilot, Cursor};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \textbf{Tendencia:} Cada era \textbf{aumenta el nivel de abstracción} entre el programador y la máquina.
+\end{frame}
+
+\begin{frame}{El Nuevo Flujo de Trabajo}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{alertblock}{Programación Tradicional}
+            \begin{enumerate}
+                \item Pensar el algoritmo
+                \item Escribir código línea por línea
+                \item Debuggear errores de sintaxis
+                \item Buscar en Stack Overflow
+                \item Copiar y adaptar soluciones
+            \end{enumerate}
+        \end{alertblock}
+        
+        \column{0.48\textwidth}
+        \begin{exampleblock}{Vibe Coding}
+            \begin{enumerate}
+                \item Describir la intención en lenguaje natural
+                \item La IA genera el código
+                \item Revisar y validar la solución
+                \item Iterar con nuevos prompts
+                \item Refinar hasta obtener el resultado
+            \end{enumerate}
+        \end{exampleblock}
+    \end{columns}
+    
+    \vspace{0.5cm}
+    \centering
+    \textbf{Cambio de rol:} De \textit{escritor} de código a \textit{director} de código.
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: HERRAMIENTAS PRINCIPALES
+%===========================================================
+\section{Herramientas de Programación Asistida}
+
+\begin{frame}{Ecosistema de Herramientas (2026)}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{2.5cm} p{3cm} p{4cm} p{3cm}}
+            \toprule
+            \textbf{Herramienta} & \textbf{Empresa} & \textbf{Características} & \textbf{Modelo Base} \\
+            \midrule
+            GitHub Copilot & Microsoft/GitHub & Integración VS Code, autocompletado & GPT-4 / Codex \\
+            Cursor & Cursor Inc. & IDE completo, chat integrado & Claude / GPT-4 \\
+            Claude Code & Anthropic & Terminal, agéntico & Claude 3.5/4 \\
+            Windsurf & Codeium & Flujo agéntico, gratuito & Modelos propios \\
+            Amazon Q & AWS & Integración AWS & Titan / Claude \\
+            Gemini Code & Google & Integración Google Cloud & Gemini \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.3cm}
+    \centering
+    \textbf{En este curso:} Se utilizará principalmente \textbf{Cursor} y \textbf{GitHub Copilot}.
+\end{frame}
+
+\begin{frame}{GitHub Copilot}
+    \begin{columns}
+        \column{0.6\textwidth}
+        \textbf{Características principales:}
+        \begin{itemize}
+            \item Autocompletado inteligente en tiempo real
+            \item Sugerencias basadas en contexto del archivo
+            \item Generación de funciones completas desde comentarios
+            \item Soporte para múltiples lenguajes
+            \item Chat integrado (Copilot Chat)
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Integración:}
+        \begin{itemize}
+            \item VS Code, Visual Studio, JetBrains
+            \item Neovim, Vim
+        \end{itemize}
+        
+        \column{0.4\textwidth}
+        \begin{block}{Precio (2026)}
+            \begin{itemize}
+                \item Individual: \$10/mes
+                \item Business: \$19/mes
+                \item \textbf{Estudiantes: Gratis}
+            \end{itemize}
+        \end{block}
+        
+        \vspace{0.3cm}
+        \centering
+        \faGithub \ \texttt{github.com/features/copilot}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Cursor: El IDE del Futuro}
+    \begin{columns}
+        \column{0.6\textwidth}
+        \textbf{Características principales:}
+        \begin{itemize}
+            \item IDE completo basado en VS Code
+            \item Chat con contexto del proyecto completo
+            \item Modo ``Composer'' para cambios multi-archivo
+            \item Comando Cmd+K para edición inline
+            \item Integración con múltiples LLMs
+            \item Indexación semántica del codebase
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Modos de interacción:}
+        \begin{itemize}
+            \item \textbf{Tab:} Autocompletado
+            \item \textbf{Chat:} Conversación contextual
+            \item \textbf{Composer:} Edición multi-archivo
+        \end{itemize}
+        
+        \column{0.4\textwidth}
+        \begin{block}{Precio (2026)}
+            \begin{itemize}
+                \item Hobby: Gratis (limitado)
+                \item Pro: \$20/mes
+                \item Business: \$40/mes
+            \end{itemize}
+        \end{block}
+        
+        \vspace{0.3cm}
+        \centering
+        \faDesktop \ \texttt{cursor.com}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Comparación: Copilot vs Cursor}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.4}
+        \begin{tabular}{p{4cm} p{4.5cm} p{4.5cm}}
+            \toprule
+            \textbf{Aspecto} & \textbf{GitHub Copilot} & \textbf{Cursor} \\
+            \midrule
+            Tipo & Plugin/Extensión & IDE Completo \\
+            Contexto & Archivo actual & Proyecto completo \\
+            Edición multi-archivo & Limitada & Nativa (Composer) \\
+            Modelos & GPT-4 (fijo) & Claude, GPT-4, etc. \\
+            Curva de aprendizaje & Baja & Media \\
+            Ideal para & Autocompletado rápido & Proyectos complejos \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.3cm}
+    \centering
+    \textbf{Recomendación:} Comenzar con Copilot, migrar a Cursor para proyectos mayores.
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: CÓMO FUNCIONAN
+%===========================================================
+\section{¿Cómo Funcionan los Asistentes de Código?}
+
+\begin{frame}{Arquitectura General}
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm, auto]
+        \tikzstyle{block} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm, text centered, draw=black, fill=blue!20]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (input) [block] {Código + Prompt};
+        \node (tokenizer) [block, right=1cm of input] {Tokenizador};
+        \node (llm) [block, right=1cm of tokenizer, fill=green!30] {LLM};
+        \node (output) [block, right=1cm of llm] {Código Generado};
+        
+        \draw [arrow] (input) -- (tokenizer);
+        \draw [arrow] (tokenizer) -- (llm);
+        \draw [arrow] (llm) -- (output);
+        
+        \node [below=0.5cm of input, font=\scriptsize, text width=2.5cm, align=center] {Contexto del archivo, comentarios, instrucciones};
+        \node [below=0.5cm of tokenizer, font=\scriptsize, text width=2.5cm, align=center] {Convierte texto a tokens numéricos};
+        \node [below=0.5cm of llm, font=\scriptsize, text width=2.5cm, align=center] {GPT-4, Claude, etc.};
+        \node [below=0.5cm of output, font=\scriptsize, text width=2.5cm, align=center] {Sugerencias, funciones, explicaciones};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    El asistente \textbf{predice} el código más probable dado el contexto proporcionado.
+\end{frame}
+
+\begin{frame}{El Contexto lo es Todo}
+    \begin{block}{¿Qué información utiliza el asistente?}
+        \begin{itemize}
+            \item Código anterior y posterior al cursor
+            \item Nombres de archivos y estructura del proyecto
+            \item Comentarios y docstrings
+            \item Imports y dependencias
+            \item Historial de la conversación (en modo chat)
+        \end{itemize}
+    \end{block}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Implicación Importante}
+        \textbf{Código bien documentado = Mejores sugerencias de IA}
+        
+        Los nombres descriptivos, comentarios claros y estructura organizada mejoran dramáticamente la calidad del código generado.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{Limitaciones Técnicas}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{alertblock}{Ventana de Contexto}
+            \begin{itemize}
+                \item Los LLMs tienen límite de tokens
+                \item GPT-4: ~128K tokens
+                \item Claude 3: ~200K tokens
+                \item Proyectos grandes exceden el límite
+            \end{itemize}
+        \end{alertblock}
+        
+        \column{0.48\textwidth}
+        \begin{alertblock}{Alucinaciones}
+            \begin{itemize}
+                \item La IA puede inventar APIs inexistentes
+                \item Puede generar código que ``parece'' correcto
+                \item No tiene acceso a documentación actualizada
+                \item \textbf{Siempre verificar el código generado}
+            \end{itemize}
+        \end{alertblock}
+    \end{columns}
+    
+    \vspace{0.5cm}
+    \centering
+    \textit{``La IA es un copiloto, no un piloto automático.''}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 4: FLUJO DE TRABAJO PRÁCTICO
+%===========================================================
+\section{Flujo de Trabajo con Vibe Coding}
+
+\begin{frame}{El Ciclo del Vibe Coding}
+    \centering
+    \begin{tikzpicture}[node distance=2cm, auto]
+        \tikzstyle{step} = [circle, minimum size=1.5cm, text centered, draw=black, fill=blue!20, font=\scriptsize]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (describe) [step, fill=green!30] {1. Describir};
+        \node (generate) [step, right=1.5cm of describe] {2. Generar};
+        \node (review) [step, right=1.5cm of generate] {3. Revisar};
+        \node (test) [step, below=1.5cm of review] {4. Probar};
+        \node (iterate) [step, left=1.5cm of test] {5. Iterar};
+        
+        \draw [arrow] (describe) -- (generate);
+        \draw [arrow] (generate) -- (review);
+        \draw [arrow] (review) -- (test);
+        \draw [arrow] (test) -- (iterate);
+        \draw [arrow] (iterate) -- (describe);
+        
+        \node [right=0.3cm of describe, font=\tiny, text width=2cm] {Escribir prompt claro};
+        \node [right=0.3cm of review, font=\tiny, text width=2cm] {Verificar lógica};
+        \node [below=0.3cm of test, font=\tiny, text width=2cm] {Ejecutar y validar};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \textbf{Clave:} La iteración rápida. No se espera perfección en el primer intento.
+\end{frame}
+
+\begin{frame}{Anatomía de un Buen Prompt}
+    \begin{exampleblock}{Estructura Recomendada}
+        \begin{enumerate}
+            \item \textbf{Contexto:} ¿Qué se está construyendo?
+            \item \textbf{Tarea específica:} ¿Qué debe hacer esta función/clase?
+            \item \textbf{Restricciones:} ¿Hay requisitos especiales?
+            \item \textbf{Formato:} ¿Cómo debe verse el resultado?
+        \end{enumerate}
+    \end{exampleblock}
+    
+    \vspace{0.3cm}
+    \begin{columns}
+        \column{0.48\textwidth}
+        \begin{alertblock}{Prompt Malo \faTimesCircle}
+            ``Haz una función para ordenar''
+        \end{alertblock}
+        
+        \column{0.48\textwidth}
+        \begin{exampleblock}{Prompt Bueno \faCheckCircle}
+            ``Crear una función que ordene una lista de diccionarios por el campo 'fecha' en orden descendente. Usar el módulo datetime.''
+        \end{exampleblock}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo: Prompt $\rightarrow$ Código}
+    \begin{lstlisting}[style=promptstyle, title=Prompt en Cursor/Copilot]
+Crear una clase CuentaBancaria con:
+- Atributos: titular (str), saldo (float, privado)
+- Metodos: depositar, retirar (con validacion), obtener_saldo
+- El saldo no puede ser negativo
+- Incluir docstrings en espanol
+    \end{lstlisting}
+    
+    \vspace{0.2cm}
+    \textbf{La IA genera:}
+    \begin{lstlisting}[basicstyle=\ttfamily\tiny]
+class CuentaBancaria:
+    """Representa una cuenta bancaria con operaciones basicas."""
+    
+    def __init__(self, titular: str, saldo_inicial: float = 0.0):
+        """Inicializa la cuenta con un titular y saldo inicial."""
+        self.titular = titular
+        self._saldo = max(0.0, saldo_inicial)
+    
+    def depositar(self, monto: float) -> bool:
+        """Deposita un monto positivo en la cuenta."""
+        if monto > 0:
+            self._saldo += monto
+            return True
+        return False
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}{Técnicas Avanzadas de Prompting}
+    \begin{enumerate}
+        \setlength\itemsep{0.8em}
+        \item \textbf{Few-shot prompting:} Proporcionar ejemplos del formato deseado antes de la solicitud.
+        
+        \item \textbf{Chain of thought:} Pedir que explique el razonamiento paso a paso.
+        
+        \item \textbf{Iteración incremental:} Construir el código en partes pequeñas, no todo de una vez.
+        
+        \item \textbf{Contexto explícito:} Incluir información relevante del proyecto en el prompt.
+        
+        \item \textbf{Restricciones negativas:} Especificar lo que \textbf{no} se desea (``sin usar librerías externas'').
+    \end{enumerate}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 5: DEMOSTRACIÓN PRÁCTICA
+%===========================================================
+\section{Demostración Práctica}
+
+\begin{frame}[fragile]{Demo 1: Autocompletado Básico}
+    \textbf{Se escribe un comentario descriptivo:}
+    \begin{lstlisting}
+# Funcion que calcula el factorial de un numero usando recursion
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Copilot/Cursor sugiere automáticamente:}
+    \begin{lstlisting}
+# Funcion que calcula el factorial de un numero usando recursion
+def factorial(n: int) -> int:
+    """Calcula el factorial de n de forma recursiva."""
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Acción:} Presionar \texttt{Tab} para aceptar la sugerencia.
+\end{frame}
+
+\begin{frame}[fragile]{Demo 2: Generación desde Docstring}
+    \textbf{Se escribe solo la firma y documentación:}
+    \begin{lstlisting}
+def fibonacci(n: int) -> list[int]:
+    """
+    Genera los primeros n numeros de la secuencia Fibonacci.
+    
+    Args:
+        n: Cantidad de numeros a generar
+        
+    Returns:
+        Lista con los primeros n numeros Fibonacci
+        
+    Example:
+        >>> fibonacci(7)
+        [0, 1, 1, 2, 3, 5, 8]
+    """
+    \end{lstlisting}
+    
+    \vspace{0.2cm}
+    \textbf{La IA completa la implementación basándose en la documentación.}
+\end{frame}
+
+\begin{frame}[fragile]{Demo 3: Chat para Refactorización}
+    \begin{lstlisting}[style=promptstyle, title=Prompt en el Chat]
+Refactorizar este codigo para que sea mas eficiente y use list comprehension:
+
+def obtener_pares(numeros):
+    resultado = []
+    for n in numeros:
+        if n % 2 == 0:
+            resultado.append(n)
+    return resultado
+    \end{lstlisting}
+    
+    \vspace{0.2cm}
+    \textbf{Respuesta de la IA:}
+    \begin{lstlisting}
+def obtener_pares(numeros: list[int]) -> list[int]:
+    """Retorna los numeros pares de la lista usando list comprehension."""
+    return [n for n in numeros if n % 2 == 0]
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Demo 4: Generación de Tests}
+    \begin{lstlisting}[style=promptstyle, title=Prompt]
+Generar tests unitarios con pytest para la clase CuentaBancaria.
+Cubrir casos: deposito valido, deposito invalido, retiro valido, 
+retiro que excede saldo, saldo inicial negativo.
+    \end{lstlisting}
+    
+    \vspace{0.2cm}
+    \textbf{La IA genera:}
+    \begin{lstlisting}[basicstyle=\ttfamily\tiny]
+import pytest
+from cuenta_bancaria import CuentaBancaria
+
+class TestCuentaBancaria:
+    def test_deposito_valido(self):
+        cuenta = CuentaBancaria("Juan", 100)
+        assert cuenta.depositar(50) == True
+        assert cuenta.obtener_saldo() == 150
+    
+    def test_deposito_invalido(self):
+        cuenta = CuentaBancaria("Juan", 100)
+        assert cuenta.depositar(-50) == False
+        assert cuenta.obtener_saldo() == 100
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Demo 5: Composer (Multi-archivo)}
+    \begin{lstlisting}[style=promptstyle, title=Prompt en Cursor Composer]
+Crear una API REST basica con FastAPI para gestionar tareas (TODO):
+- Modelo: Tarea con id, titulo, descripcion, completada
+- Endpoints: GET /tareas, POST /tareas, PUT /tareas/{id}, DELETE /tareas/{id}
+- Usar Pydantic para validacion
+- Crear archivos separados: models.py, routes.py, main.py
+    \end{lstlisting}
+    
+    \vspace{0.3cm}
+    \textbf{Cursor genera automáticamente los tres archivos con la estructura completa.}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Ventaja del Composer}
+        Se mantiene la coherencia entre archivos: imports correctos, referencias cruzadas, y convenciones consistentes.
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 6: BUENAS PRÁCTICAS
+%===========================================================
+\section{Buenas Prácticas y Consideraciones}
+
+\begin{frame}{Las 7 Reglas del Vibe Coding}
+    \begin{enumerate}
+        \setlength\itemsep{0.6em}
+        \item \textbf{Siempre revisar:} Nunca aceptar código sin entenderlo.
+        \item \textbf{Probar todo:} Ejecutar y validar antes de integrar.
+        \item \textbf{Iterar rápido:} Pequeños cambios, feedback inmediato.
+        \item \textbf{Ser específico:} Prompts vagos = código vago.
+        \item \textbf{Mantener contexto:} Nombres descriptivos mejoran las sugerencias.
+        \item \textbf{Conocer los límites:} La IA no reemplaza el conocimiento fundamental.
+        \item \textbf{Documentar decisiones:} Explicar por qué, no solo qué.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Cuándo NO Usar Vibe Coding Ciegamente}
+    \begin{alertblock}{Situaciones de Alto Riesgo}
+        \begin{itemize}
+            \item Código de seguridad (autenticación, criptografía)
+            \item Sistemas críticos (médicos, financieros, aeronáuticos)
+            \item Manejo de datos sensibles (PII, HIPAA, GDPR)
+            \item Algoritmos con requisitos de rendimiento estrictos
+        \end{itemize}
+    \end{alertblock}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{En Estos Casos}
+        \begin{itemize}
+            \item Usar la IA como \textbf{punto de partida}, no como solución final
+            \item Revisión exhaustiva por expertos
+            \item Testing riguroso y auditorías de código
+        \end{itemize}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Consideraciones Éticas y Legales}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Propiedad Intelectual}
+            \begin{itemize}
+                \item ¿De quién es el código generado?
+                \item Los LLMs se entrenan con código público
+                \item Posible reproducción de código con licencia
+                \item Verificar licencias de dependencias
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Privacidad}
+            \begin{itemize}
+                \item El código se envía a servidores externos
+                \item No usar con código propietario sensible
+                \item Revisar políticas de retención de datos
+                \item Opciones on-premise para empresas
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    
+    \vspace{0.5cm}
+    \centering
+    \textbf{Recomendación:} Revisar las políticas de uso de cada herramienta.
+\end{frame}
+
+\begin{frame}{El Futuro del Desarrollador}
+    \begin{exampleblock}{Habilidades que Aumentan de Valor}
+        \begin{itemize}
+            \item Pensamiento arquitectónico y diseño de sistemas
+            \item Comunicación clara (para mejores prompts)
+            \item Revisión crítica de código
+            \item Comprensión profunda de fundamentos
+            \item Creatividad y resolución de problemas complejos
+        \end{itemize}
+    \end{exampleblock}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Habilidades que Disminuyen de Valor}
+        \begin{itemize}
+            \item Memorización de sintaxis
+            \item Tareas repetitivas de codificación
+            \item Búsqueda manual de soluciones comunes
+        \end{itemize}
+    \end{alertblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 7: CONFIGURACIÓN DEL ENTORNO
+%===========================================================
+\section{Configuración del Entorno}
+
+\begin{frame}{Instalación de Cursor}
+    \textbf{Pasos para configurar Cursor:}
+    \begin{enumerate}
+        \setlength\itemsep{0.5em}
+        \item Descargar desde \texttt{cursor.com}
+        \item Instalar (disponible para Windows, Mac, Linux)
+        \item Crear cuenta o iniciar sesión
+        \item Importar configuración de VS Code (opcional)
+        \item Seleccionar modelo preferido (Claude recomendado)
+    \end{enumerate}
+    
+    \vspace{0.3cm}
+    \begin{block}{Atajos Esenciales}
+        \begin{itemize}
+            \item \textbf{Cmd/Ctrl + K:} Edición inline con prompt
+            \item \textbf{Cmd/Ctrl + L:} Abrir chat
+            \item \textbf{Cmd/Ctrl + I:} Abrir Composer
+            \item \textbf{Tab:} Aceptar sugerencia
+            \item \textbf{Esc:} Rechazar sugerencia
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}{Instalación de GitHub Copilot}
+    \textbf{Pasos para configurar Copilot en VS Code:}
+    \begin{enumerate}
+        \setlength\itemsep{0.5em}
+        \item Abrir VS Code
+        \item Ir a Extensions (Cmd/Ctrl + Shift + X)
+        \item Buscar ``GitHub Copilot''
+        \item Instalar la extensión oficial
+        \item Autenticarse con cuenta de GitHub
+        \item (Estudiantes) Verificar GitHub Education para acceso gratuito
+    \end{enumerate}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Verificar GitHub Education}
+        \begin{enumerate}
+            \item Ir a \texttt{education.github.com}
+            \item Registrarse con correo institucional (@usac.edu.gt)
+            \item Subir comprobante de estudiante
+            \item Esperar aprobación (24-72 horas)
+        \end{enumerate}
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 8: EJERCICIOS
+%===========================================================
+\section{Ejercicios Propuestos}
+
+\begin{frame}{Ejercicios para Practicar}
+    \textbf{Usar Cursor o Copilot para los siguientes ejercicios:}
+    \vspace{0.3cm}
+    
+    \begin{enumerate}
+        \setlength\itemsep{0.7em}
+        \item Generar una función que valide si un string es un palíndromo (ignorando espacios y mayúsculas).
+        
+        \item Crear una clase \texttt{Calculadora} con operaciones básicas y un historial de operaciones.
+        
+        \item Generar una función que convierta números romanos a enteros y viceversa.
+        
+        \item Crear un script que lea un archivo CSV y genere estadísticas básicas (media, mediana, moda).
+        
+        \item \textbf{(Bonus)} Usar el Composer de Cursor para generar una aplicación CLI de lista de tareas con persistencia en JSON.
+    \end{enumerate}
+    
+    \vspace{0.3cm}
+    \textbf{Importante:} Documentar los prompts utilizados y las iteraciones necesarias.
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Próxima clase:} Iteración Rápida y Revisión de Código con IA
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``La mejor manera de predecir el futuro es inventarlo.''} — Alan Kay
+\end{frame}
+
+\end{document}

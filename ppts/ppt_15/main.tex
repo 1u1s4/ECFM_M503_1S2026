@@ -1,0 +1,955 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage{comment}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools} % Agregado para poder usar bsmallmatrix
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, decorations.pathreplacing, trees, matrix}
+
+%--- Configuración de Listings ---
+\lstdefinestyle{codestyle}{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    columns=fullflexible
+}
+\lstdefinestyle{pythonstyle}{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{blue!5},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    morekeywords={import,def,return,for,in,self,class,as,from},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red!70!black},
+    commentstyle=\color{green!50!black},
+    columns=fullflexible
+}
+
+%--- Metadatos del Documento ---
+\title[PM2]{Programación Matemática 2}
+\subtitle{Historia de la IA --- El Surgimiento del Mecanismo de Atención}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: RECAPITULACIÓN
+%===========================================================
+\section{Recapitulación: Del Perceptrón a las RNNs}
+
+\begin{frame}{Hitos Clave}
+    \textbf{Hitos:}
+    \begin{itemize}
+        \item \textbf{1958:} Perceptrón (Rosenblatt) --- la primera neurona artificial
+        \item \textbf{1986:} Backpropagation (Rumelhart, Hinton, Williams)
+        \item \textbf{1989:} Redes Convolucionales / CNNs (LeCun)
+        \item \textbf{1997:} Long Short-Term Memory / LSTM (Hochreiter \& Schmidhuber)
+        \item \textbf{2012:} AlexNet gana ImageNet --- el ``Big Bang'' del Deep Learning
+    \end{itemize}
+    
+    \vspace{0.4cm}
+    \begin{block}{Pregunta de Hoy}
+        Las redes neuronales ya podían ver (CNNs) y recordar (LSTMs). Pero, ¿podían realmente \textbf{entender lenguaje}? ¿Qué les faltaba?
+    \end{block}
+\end{frame}
+
+\begin{frame}{El Problema Central: Entender Secuencias}
+    \textbf{El lenguaje es fundamentalmente secuencial:}
+    \begin{itemize}
+        \item Las palabras dependen del contexto (``banco'' financiero vs. ``banco'' del parque)
+        \item El significado puede depender de palabras \textbf{muy lejanas} en la oración
+        \item El orden importa: ``el perro mordió al hombre'' $\neq$ ``el hombre mordió al perro''
+    \end{itemize}
+
+    \vspace{0.4cm}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \foreach \i/\w in {0/El, 1/gato, 2/que, 3/estaba, 4/en, 5/el, 6/tejado, 7/saltó} {
+            \node[rectangle, draw, fill=blue!20, minimum width=1cm, minimum height=0.6cm, font=\scriptsize] (w\i) at (\i*1.5, 0) {\w};
+        }
+        \draw[->, red, thick, bend left=40] (w1) to node[above, font=\tiny] {¿quién saltó?} (w7);
+        \node[below=0.5cm, font=\scriptsize, text width=10cm, align=center] at (5.25,-0.2) {El modelo necesita conectar ``gato'' con ``saltó'' a través de 6 palabras intermedias};
+    \end{tikzpicture}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: REDES RECURRENTES Y SUS LÍMITES
+%===========================================================
+\section{Redes Recurrentes y sus Limitaciones}
+
+\begin{frame}{Redes Neuronales Recurrentes (RNNs)}
+    \begin{block}{Idea Fundamental}
+        Procesar la secuencia \textbf{palabra por palabra}, manteniendo un ``estado oculto'' (\textit{hidden state}) que actúa como memoria de lo que se ha visto.
+    \end{block}
+
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \tikzset{
+            rnn/.style={rectangle, draw, fill=yellow!30, minimum width=1.2cm, minimum height=1cm, font=\scriptsize, align=center},
+            input/.style={rectangle, draw, fill=blue!20, minimum width=1cm, minimum height=0.6cm, font=\scriptsize},
+            output/.style={rectangle, draw, fill=green!20, minimum width=1cm, minimum height=0.6cm, font=\scriptsize},
+            arrow/.style={thick, ->, >=stealth}
+        }
+        
+        \foreach \i/\w in {0/El, 1/gato, 2/come, 3/pescado} {
+            \node[input] (x\i) at (\i*2.8, -1.5) {$x_\i$: \w};
+            \node[rnn] (h\i) at (\i*2.8, 0) {$h_\i$};
+            \node[output] (y\i) at (\i*2.8, 1.5) {$y_\i$};
+            \draw[arrow] (x\i) -- (h\i);
+            \draw[arrow] (h\i) -- (y\i);
+        }
+        \foreach \i [evaluate=\i as \j using int(\i+1)] in {0,1,2} {
+            \draw[arrow, red] (h\i) -- node[above, font=\tiny] {$h_t$} (h\j);
+        }
+        
+        \node[below=0.3cm of x0, font=\tiny, text width=2cm, align=center] {Tiempo $t=0$};
+        \node[below=0.3cm of x3, font=\tiny, text width=2cm, align=center] {Tiempo $t=3$};
+    \end{tikzpicture}
+    
+    \vspace{0.2cm}
+    Cada paso: $h_t = f(h_{t-1}, x_t)$ --- el estado actual depende del anterior y la entrada.
+\end{frame}
+
+\begin{frame}{El Problema del Gradiente Desvaneciente}
+    \begin{alertblock}{El Gran Problema de las RNNs Simples}
+        Al entrenar con backpropagation a través del tiempo (\textit{BPTT}), los gradientes se \textbf{multiplican} en cada paso temporal. Esto causa que se desvanezcan exponencialmente.
+    \end{alertblock}
+    
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \tikzset{
+            cell/.style={rectangle, draw, minimum width=1cm, minimum height=0.8cm, font=\scriptsize, align=center}
+        }
+        
+        \foreach \i/\c in {0/green!60, 1/green!45, 2/green!30, 3/yellow!40, 4/orange!30, 5/red!20, 6/red!10} {
+            \node[cell, fill=\c] (c\i) at (\i*1.6, 0) {$h_\i$};
+        }
+        \foreach \i [evaluate=\i as \j using int(\i+1)] in {0,...,5} {
+            \draw[->, thick] (c\i) -- (c\j);
+        }
+        
+        \draw[decorate, decoration={brace, amplitude=5pt, mirror}] (0,-0.8) -- (10.4,-0.8) 
+            node[midway, below=0.3cm, font=\scriptsize] {La información de $h_0$ casi desaparece al llegar a $h_6$};
+        
+        \node[above=0.3cm of c0, font=\tiny, text=green!50!black] {Señal fuerte};
+        \node[above=0.3cm of c6, font=\tiny, text=red!50!black] {Señal casi nula};
+    \end{tikzpicture}
+    
+    \vspace{0.4cm}
+    \textbf{Consecuencia:} Las RNNs simples no pueden aprender dependencias de largo alcance. Olvidan el inicio de oraciones largas.
+\end{frame}
+
+\begin{frame}{LSTM: Un Parche Ingenioso (pero no Suficiente)}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \textbf{LSTMs (1997)} agregaron ``compuertas'' para controlar el flujo de información:
+        \begin{itemize}
+            \item \textbf{Forget gate:} qué olvidar
+            \item \textbf{Input gate:} qué nueva info guardar
+            \item \textbf{Output gate:} qué exponer
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \textbf{Mejoras:}
+        \begin{itemize}
+            \item[\faCheck] Memoria de largo plazo mejorada
+            \item[\faCheck] Mejor flujo de gradientes
+        \end{itemize}
+        
+        \textbf{Problemas persistentes:}
+        \begin{itemize}
+            \item[\faTimes] Procesamiento \textbf{secuencial} (lento)
+            \item[\faTimes] Aún pierde contexto en secuencias muy largas
+            \item[\faTimes] No se puede paralelizar $\rightarrow$ entrenamiento lento
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7]
+            \node[rectangle, draw, fill=yellow!30, minimum width=3cm, minimum height=2.5cm, rounded corners] (lstm) at (0,0) {};
+            \node[font=\small\bfseries] at (0,0.8) {Celda LSTM};
+            
+            \node[circle, draw, fill=red!20, inner sep=2pt, font=\tiny] (fg) at (-0.8,-0.2) {$f$};
+            \node[circle, draw, fill=green!20, inner sep=2pt, font=\tiny] (ig) at (0,-0.2) {$i$};
+            \node[circle, draw, fill=blue!20, inner sep=2pt, font=\tiny] (og) at (0.8,-0.2) {$o$};
+            
+            \node[below=0.1cm of fg, font=\tiny] {forget};
+            \node[below=0.1cm of ig, font=\tiny] {input};
+            \node[below=0.1cm of og, font=\tiny] {output};
+            
+            \draw[->, thick] (-2, 0.5) -- (-1.5, 0.5) node[midway, above, font=\tiny] {$c_{t-1}$};
+            \draw[->, thick] (1.5, 0.5) -- (2, 0.5) node[midway, above, font=\tiny] {$c_t$};
+            \draw[->, thick] (-2, -0.8) -- (-1.5, -0.8) node[midway, below, font=\tiny] {$h_{t-1}$};
+            \draw[->, thick] (1.5, -0.8) -- (2, -0.8) node[midway, below, font=\tiny] {$h_t$};
+            \draw[->, thick] (0, -2) -- (0, -1.25) node[midway, right, font=\tiny] {$x_t$};
+        \end{tikzpicture}
+        
+        \vspace{0.2cm}
+        \scriptsize Diagrama simplificado de una celda LSTM.
+    \end{columns}
+\end{frame}
+
+\begin{comment}
+\begin{frame}{El Cuello de Botella de las RNNs}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \tikzset{
+            box/.style={rectangle, rounded corners, draw, minimum width=1.5cm, minimum height=0.7cm, font=\scriptsize, align=center}
+        }
+        
+        % Sequential processing illustration
+        \node[box, fill=blue!20] (w1) at (0,0) {Hola};
+        \node[box, fill=blue!20] (w2) at (2,0) {mundo};
+        \node[box, fill=blue!20] (w3) at (4,0) {cruel};
+        \node[box, fill=blue!20] (w4) at (6,0) {y};
+        \node[box, fill=blue!20] (w5) at (8,0) {hermoso};
+        
+        \draw[->, thick] (w1) -- (w2);
+        \draw[->, thick] (w2) -- (w3);
+        \draw[->, thick] (w3) -- (w4);
+        \draw[->, thick] (w4) -- (w5);
+        
+        \foreach \i in {1,...,5} {
+            \node[above=0.3cm of w\i, font=\tiny, gray] {$t=\i$};
+        }
+        
+        \node[below=0.8cm, font=\scriptsize, text width=10cm, align=center] at (4,-0.2) {
+            \textbf{Problema 1:} Cada palabra debe esperar a la anterior $\rightarrow$ no se puede paralelizar en GPU
+        };
+        
+        % Bottleneck
+        \node[box, fill=red!30] (bottle) at (4,-2.5) {Vector $h_T$};
+        \draw[->, thick, red] (w5.south) -- ++(0,-0.5) -| (bottle.north);
+        \node[below=0.3cm of bottle, font=\scriptsize, text width=8cm, align=center] {
+            \textbf{Problema 2:} Toda la oración se comprime en UN solo vector de tamaño fijo
+        };
+    \end{tikzpicture}
+\end{frame}
+\end{comment}
+
+%===========================================================
+% SECCIÓN 3: SEQ2SEQ Y EL CUELLO DE BOTELLA
+%===========================================================
+\section{Sequence-to-Sequence y el Cuello de Botella}
+
+\begin{frame}{Modelo Seq2Seq (2014)}
+    \begin{block}{El Avance de Sutskever, Vinyals \& Le}
+        Usar dos RNNs: un \textbf{encoder} que comprime la entrada y un \textbf{decoder} que genera la salida. Revolucionó la traducción automática.
+    \end{block}
+    
+    \centering
+    \begin{tikzpicture}[scale=0.8]
+        \tikzset{
+            rnn/.style={rectangle, draw, fill=yellow!30, minimum width=0.9cm, minimum height=0.7cm, font=\tiny, align=center},
+            word/.style={font=\scriptsize},
+            arrow/.style={thick, ->, >=stealth}
+        }
+        
+        % Encoder
+        \node[font=\small\bfseries, blue] at (-0.5, 2) {Encoder};
+        \foreach \i/\w in {0/Yo, 1/amo, 2/Guatemala} {
+            \node[rnn, fill=blue!20] (e\i) at (\i*1.8, 1) {};
+            \node[word, below=0.2cm] at (e\i.south) {\w};
+        }
+        \draw[arrow] (e0) -- (e1);
+        \draw[arrow] (e1) -- (e2);
+        
+        % Context vector
+        \node[circle, draw, fill=red!30, minimum size=1cm, font=\tiny, align=center] (ctx) at (4.5, 1) {$c$};
+        \draw[arrow, red, thick] (e2) -- (ctx);
+        \node[above=0.2cm of ctx, font=\tiny, red] {contexto};
+        
+        % Decoder
+        \node[font=\small\bfseries, green!50!black] at (7, 2) {Decoder};
+        \foreach \i/\w in {0/I, 1/love, 2/Guatemala} {
+            \pgfmathsetmacro{\xpos}{6 + \i*1.8}
+            \node[rnn, fill=green!20] (d\i) at (\xpos, 1) {};
+            \node[word, above=0.2cm] at (d\i.north) {\w};
+        }
+        \draw[arrow, red, thick] (ctx) -- (d0);
+        \draw[arrow] (d0) -- (d1);
+        \draw[arrow] (d1) -- (d2);
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{El Cuello de Botella}
+        \textbf{Toda} la información de la oración de entrada se comprime en un único vector de contexto $c$. Para oraciones largas, esto es como comprimir un libro en un tweet.
+    \end{alertblock}
+\end{frame}
+
+\begin{comment}
+\begin{frame}{Evidencia del Problema}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        % Axes
+        \draw[->, thick] (0,0) -- (9,0) node[right, font=\scriptsize] {Longitud de la oración};
+        \draw[->, thick] (0,0) -- (0,5) node[above, font=\scriptsize] {Calidad (BLEU score)};
+        
+        % Curve - Seq2Seq without attention
+        \draw[thick, red, smooth] plot coordinates {(0.5,4.2) (2,4) (3.5,3.5) (5,2.5) (6.5,1.5) (8,0.8)};
+        \node[red, font=\tiny, right] at (8, 0.8) {Seq2Seq};
+        
+        % Curve - with attention (preview)
+        \draw[thick, blue, dashed, smooth] plot coordinates {(0.5,4.3) (2,4.2) (3.5,4.1) (5,3.9) (6.5,3.7) (8,3.5)};
+        \node[blue, font=\tiny, right] at (8, 3.5) {Con Atención};
+        
+        % Annotation
+        \draw[<->, thick, orange] (7, 1.2) -- (7, 3.6);
+        \node[orange, font=\tiny, right] at (7.1, 2.4) {¡Gran diferencia!};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \textbf{Observación empírica:} La calidad de traducción de Seq2Seq \textbf{caía dramáticamente} con oraciones de más de 20 palabras. La solución necesitaba un mecanismo que pudiera ``mirar atrás'' selectivamente.
+\end{frame}
+\end{comment}
+
+%===========================================================
+% SECCIÓN 4: EL NACIMIENTO DE LA ATENCIÓN
+%===========================================================
+\section{El Nacimiento del Mecanismo de Atención}
+
+\begin{frame}{Bahdanau et al. (2014): La Idea que Cambió Todo}
+    \begin{block}{Paper Fundacional}
+        \textbf{``Neural Machine Translation by Jointly Learning to Align and Translate''} \\
+        Dzmitry Bahdanau, Kyunghyun Cho, Yoshua Bengio (septiembre 2014)
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{La intuición humana detrás:}
+    \begin{itemize}
+        \item Cuando un traductor humano traduce una oración larga, \textbf{no memoriza toda la oración} y luego traduce.
+        \item En cada palabra que traduce, \textbf{mira de vuelta} al texto original y se enfoca en las partes relevantes.
+        \item Un traductor ``atiende'' diferentes partes de la entrada según lo que está generando.
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{La Propuesta}
+        En lugar de comprimir toda la entrada en un vector fijo, permitir que el decoder \textbf{atienda selectivamente} a diferentes posiciones del encoder en cada paso de la generación.
+    \end{exampleblock}
+\end{frame}
+\begin{comment}
+\begin{frame}{Atención de Bahdanau: Mecanismo}
+    \centering
+    \begin{tikzpicture}[scale=0.75, transform shape]
+        \tikzset{
+            enc/.style={rectangle, draw, fill=blue!20, minimum width=1cm, minimum height=0.7cm, font=\tiny},
+            dec/.style={rectangle, draw, fill=green!20, minimum width=1cm, minimum height=0.7cm, font=\tiny},
+            arrow/.style={->, >=stealth}
+        }
+        
+        % Encoder states
+        \node[enc] (h1) at (0,0) {$h_1$};
+        \node[enc] (h2) at (1.8,0) {$h_2$};
+        \node[enc] (h3) at (3.6,0) {$h_3$};
+        \node[enc] (h4) at (5.4,0) {$h_4$};
+        
+        \node[below=0.2cm of h1, font=\tiny] {Yo};
+        \node[below=0.2cm of h2, font=\tiny] {amo};
+        \node[below=0.2cm of h3, font=\tiny] {a};
+        \node[below=0.2cm of h4, font=\tiny] {Guate};
+        
+        % Decoder state
+        \node[dec] (s) at (2.7, 3.5) {$s_t$ (decoder)};
+        
+        % Attention weights
+        \draw[arrow, red!30, line width=1pt] (s.south) -- node[left, font=\tiny, red] {$\alpha_1$=0.1} (h1.north);
+        \draw[arrow, red!80, line width=3pt] (s.south) -- node[left, font=\tiny, red] {$\alpha_2$=0.7} (h2.north);
+        \draw[arrow, red!20, line width=0.8pt] (s.south) -- node[right, font=\tiny, red] {$\alpha_3$=0.05} (h3.north);
+        \draw[arrow, red!40, line width=1.5pt] (s.south) -- node[right, font=\tiny, red] {$\alpha_4$=0.15} (h4.north);
+        
+        % Context vector
+        \node[circle, draw, fill=orange!30, minimum size=0.8cm, font=\tiny] (c) at (7.5, 1.5) {$c_t$};
+        \draw[arrow, thick, orange] (h1.east) .. controls (6,0.5) .. (c.west);
+        \draw[arrow, thick, orange] (h2.east) .. controls (6,0.8) .. (c.west);
+        \draw[arrow, thick, orange] (h3.east) .. controls (6.5,1) .. (c.west);
+        \draw[arrow, thick, orange] (h4.east) .. controls (7,1) .. (c.west);
+        
+        % Output
+        \node[rectangle, draw, fill=purple!20, minimum width=1.2cm, minimum height=0.7cm, font=\tiny] (out) at (7.5, 3.5) {``love''};
+        \draw[arrow, thick] (c) -- (out);
+        \draw[arrow, thick, green!50!black] (s) -- (out);
+        
+        % Annotation
+        \node[font=\tiny, text width=3cm, align=center] at (9.5, 0) {Suma ponderada:\\$c_t = \sum_i \alpha_i h_i$};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \textbf{Clave:} Los pesos $\alpha_i$ son \textbf{dinámicos} --- cambian en cada paso del decoder. Cuando genera ``love'', atiende más a ``amo''.
+\end{frame}
+
+
+\begin{frame}{Las Matemáticas de la Atención (Bahdanau)}
+    \textbf{Paso 1: Calcular scores de alineamiento}
+    \begin{equation*}
+        e_{ij} = a(s_{i-1}, h_j) = v^T \tanh(W_s s_{i-1} + W_h h_j)
+    \end{equation*}
+    ``¿Qué tan relevante es la posición $j$ del encoder para el paso $i$ del decoder?''
+    
+    \vspace{0.3cm}
+    \textbf{Paso 2: Normalizar con Softmax}
+    \begin{equation*}
+        \alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k=1}^{T_x} \exp(e_{ik})}
+    \end{equation*}
+    Los pesos suman 1 --- forman una distribución de probabilidad sobre las posiciones.
+    
+    \vspace{0.3cm}
+    \textbf{Paso 3: Calcular el vector de contexto}
+    \begin{equation*}
+        c_i = \sum_{j=1}^{T_x} \alpha_{ij} h_j
+    \end{equation*}
+    Promedio ponderado de los estados del encoder, donde los pesos reflejan la ``atención''.
+\end{frame}
+\end{comment}
+
+\begin{comment}
+\begin{frame}{Visualizando la Atención: Matrices de Alineamiento}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.6]
+            % Grid
+            \def\words{{"I","love","Guate","<eos>"}}
+            \def\srcwords{{"Yo","amo","Guate","<eos>"}}
+            
+            % Column labels (source)
+            \node[font=\tiny, rotate=45, anchor=south west] at (0.5, 4.3) {Yo};
+            \node[font=\tiny, rotate=45, anchor=south west] at (1.5, 4.3) {amo};
+            \node[font=\tiny, rotate=45, anchor=south west] at (2.5, 4.3) {Guate};
+            \node[font=\tiny, rotate=45, anchor=south west] at (3.5, 4.3) {\textless eos\textgreater};
+            
+            % Row labels (target)
+            \node[font=\tiny, anchor=east] at (0, 3.5) {I};
+            \node[font=\tiny, anchor=east] at (0, 2.5) {love};
+            \node[font=\tiny, anchor=east] at (0, 1.5) {Guate};
+            \node[font=\tiny, anchor=east] at (0, 0.5) {\textless eos\textgreater};
+            
+            % Attention weights as colored cells
+            % Row 1: I
+            \fill[blue!70] (0,3) rectangle (1,4);
+            \fill[blue!10] (1,3) rectangle (2,4);
+            \fill[blue!5] (2,3) rectangle (3,4);
+            \fill[blue!5] (3,3) rectangle (4,4);
+            
+            % Row 2: love
+            \fill[blue!10] (0,2) rectangle (1,3);
+            \fill[blue!80] (1,2) rectangle (2,3);
+            \fill[blue!5] (2,2) rectangle (3,3);
+            \fill[blue!5] (3,2) rectangle (4,3);
+            
+            % Row 3: Guate
+            \fill[blue!5] (0,1) rectangle (1,2);
+            \fill[blue!5] (1,1) rectangle (2,2);
+            \fill[blue!75] (2,1) rectangle (3,2);
+            \fill[blue!10] (3,1) rectangle (4,2);
+            
+            % Row 4: <eos>
+            \fill[blue!5] (0,0) rectangle (1,1);
+            \fill[blue!5] (1,0) rectangle (2,1);
+            \fill[blue!10] (2,0) rectangle (3,1);
+            \fill[blue!60] (3,0) rectangle (4,1);
+            
+            % Grid lines
+            \draw[gray] (0,0) grid (4,4);
+            
+            \node[below=0.3cm, font=\tiny] at (2,0) {Fuente (encoder)};
+            \node[left=0.3cm, font=\tiny, rotate=90, anchor=south] at (0,2) {Destino (decoder)};
+        \end{tikzpicture}
+        
+        \column{0.5\textwidth}
+        \textbf{¿Qué vemos?}
+        \begin{itemize}
+            \item La diagonal fuerte indica \textbf{alineamiento monotónico} (típico en pares de idiomas similares)
+            \item Cada fila muestra dónde ``mira'' el decoder al generar esa palabra
+            \item Más oscuro = mayor peso de atención
+        \end{itemize}
+        
+        \vspace{0.3cm}
+        \begin{exampleblock}{Insight Clave}
+            La atención es \textbf{interpretable}: podemos ver qué aprendió el modelo. Esto fue revolucionario para entender redes neuronales.
+        \end{exampleblock}
+    \end{columns}
+\end{frame}
+\end{comment}
+
+%===========================================================
+% SECCIÓN 5: EVOLUCIÓN DE LA ATENCIÓN
+%===========================================================
+\section{Evolución del Mecanismo de Atención}
+
+\begin{comment}
+\begin{frame}{Luong Attention (2015): Simplificación}
+    \begin{block}{``Effective Approaches to Attention-based Neural Machine Translation'' (Luong et al., 2015)}
+        Propuso variantes más simples y eficientes del mecanismo de atención.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{2.5cm} p{4.5cm} p{4.5cm}}
+            \toprule
+            \textbf{Aspecto} & \textbf{Bahdanau (2014)} & \textbf{Luong (2015)} \\
+            \midrule
+            Score function & $v^T \tanh(W[s;h])$ (aditiva) & $s^T W h$ (multiplicativa) \\
+            Dirección encoder & Bidireccional & Unidireccional \\
+            Estado usado & $s_{t-1}$ (paso anterior) & $s_t$ (paso actual) \\
+            Complejidad & Mayor & Menor \\
+            Variantes & Una & Global, Local \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.3cm}
+    \textbf{Atención multiplicativa} de Luong: $\text{score}(s_t, h_j) = s_t^T W h_j$ --- más rápida de computar que la versión aditiva.
+\end{frame}
+\end{comment}
+
+\begin{frame}{Tipos de Atención: Taxonomía}
+    \centering
+    \begin{tikzpicture}[
+        level 1/.style={sibling distance=5cm, level distance=1.8cm},
+        level 2/.style={sibling distance=2.5cm, level distance=1.5cm},
+        every node/.style={rectangle, rounded corners, draw, font=\tiny, minimum width=1.8cm, align=center}
+    ]
+        \node[fill=blue!20] {Mecanismos\\de Atención}
+            child {node[fill=yellow!20] {Por Scope}
+                child {node[fill=green!15] {Global\\(soft)}}
+                child {node[fill=green!15] {Local\\(hard/soft)}}
+            }
+            child {node[fill=yellow!20] {Por Score}
+                child {node[fill=orange!15] {Aditiva\\(Bahdanau)}}
+                child {node[fill=orange!15] {Multiplicativa\\(Luong)}}
+            }
+            child {node[fill=yellow!20] {Por Relación}
+                child {node[fill=purple!15] {Cross-\\Attention}}
+                child {node[fill=purple!15] {Self-\\Attention}}
+            };
+    \end{tikzpicture}
+    
+    \vspace{0.4cm}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \textbf{Cross-Attention:} El decoder atiende al encoder (como en traducción). Relaciona dos secuencias diferentes.
+        
+        \column{0.48\textwidth}
+        \textbf{Self-Attention:} Una secuencia atiende \textbf{a sí misma}. Cada palabra mira a todas las demás. Esta será la clave del Transformer.
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Self-Attention: La Idea más Poderosa}
+    \begin{block}{Intuición}
+        En \textbf{self-attention}, cada elemento de la secuencia puede atender directamente a \textbf{todos los demás elementos}, sin importar la distancia. No hay procesamiento secuencial.
+    \end{block}
+    
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \foreach \i/\w in {0/El, 1/animal, 2/no, 3/cruzó, 4/la, 5/calle, 6/porque, 7/estaba, 8/cansado} {
+            \node[rectangle, draw, fill=blue!15, minimum width=0.9cm, minimum height=0.6cm, font=\tiny] (w\i) at (\i*1.3, 0) {\w};
+        }
+        
+        % Self-attention arrows for "cansado" attending to relevant words
+        \draw[->, red, thick, bend left=30] (w8.north) to (w1.north);
+        \draw[->, red!30, thin, bend left=25] (w8.north) to (w3.north);
+        \draw[->, red!20, thin, bend left=20] (w8.north) to (w5.north);
+        
+        \node[above=1.2cm of w4, font=\scriptsize, text width=8cm, align=center, red] {``cansado'' atiende fuertemente a ``animal''\\(resuelve: ¿quién estaba cansado?)};
+        
+        % Comparison
+        \node[below=0.8cm, font=\scriptsize, text width=12cm, align=center] at (5.2,-0.2) {
+            \textbf{RNN:} 8 pasos secuenciales para conectar ``animal'' con ``cansado'' \quad vs. \quad \textbf{Self-Attention:} 1 paso directo
+        };
+    \end{tikzpicture}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 6: QUERY, KEY, VALUE
+%===========================================================
+\section{Query, Key, Value: El Lenguaje de la Atención}
+
+\begin{frame}{La Analogía: Búsqueda en una Base de Datos}
+    \begin{block}{Intuición con una Biblioteca}
+        Imagina que buscas un libro en una biblioteca:
+        \begin{itemize}
+            \item \textbf{Query (Q):} Tu pregunta: ``quiero un libro sobre IA''
+            \item \textbf{Key (K):} Las etiquetas/fichas de cada libro: ``matemáticas'', ``historia'', ``inteligencia artificial''
+            \item \textbf{Value (V):} El contenido real de cada libro
+        \end{itemize}
+    \end{block}
+    
+    \vspace{0.3cm}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        \tikzset{
+            box/.style={rectangle, rounded corners, draw, minimum width=2.5cm, minimum height=0.8cm, font=\scriptsize, align=center}
+        }
+        
+        \node[box, fill=red!20] (q) at (0,0) {Query: ``IA''};
+        
+        \node[box, fill=yellow!20] (k1) at (5, 1) {Key: ``matemáticas''};
+        \node[box, fill=yellow!20] (k2) at (5, 0) {Key: ``historia IA''};
+        \node[box, fill=yellow!20] (k3) at (5, -1) {Key: ``cocina''};
+        
+        \node[box, fill=green!20] (v2) at (10, 0) {Value: contenido};
+        
+        \draw[->, gray, thin] (q) -- node[above, font=\tiny] {baja similitud} (k1);
+        \draw[->, red, thick] (q) -- node[above, font=\tiny] {\textbf{alta similitud}} (k2);
+        \draw[->, gray, thin] (q) -- node[below, font=\tiny] {baja similitud} (k3);
+        
+        \draw[->, green!50!black, thick] (k2) -- node[above, font=\tiny] {retornar} (v2);
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Scaled Dot-Product Attention}
+    \begin{block}{La Fórmula Central (que verán en muchos papers)}
+        \begin{equation*}
+            \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+        \end{equation*}
+    \end{block}
+    
+    \vspace{0.2cm}
+    \textbf{Desglose paso a paso:}
+    \begin{enumerate}
+        \item $QK^T$: Producto punto entre queries y keys $\rightarrow$ \textbf{matriz de similitud}
+        \item $\div \sqrt{d_k}$: Escalar para estabilizar gradientes (sin esto, valores muy grandes $\rightarrow$ softmax saturado)
+        \item $\text{softmax}(\cdot)$: Convertir scores en pesos que suman 1 (distribución de probabilidad)
+        \item $\times V$: Promediar los values usando los pesos --- extraer información relevante
+    \end{enumerate}
+    
+    \vspace{0.3cm}
+    \textbf{Dimensiones:} Si $Q \in \mathbb{R}^{n \times d_k}$, $K \in \mathbb{R}^{m \times d_k}$, $V \in \mathbb{R}^{m \times d_v}$, entonces la salida $\in \mathbb{R}^{n \times d_v}$.
+\end{frame}
+
+\begin{frame}{Ejemplo Numérico Simplificado}
+    \centering
+    \scriptsize
+    \textbf{Secuencia:} ``gato come'' \quad (2 tokens, $d_k = 3$)
+    
+    \vspace{0.3cm}
+    \begin{tikzpicture}[scale=0.8]
+        % Q matrix
+        \node[font=\scriptsize\bfseries] at (-1.5, 1.5) {$Q$};
+        \draw (0,0.5) rectangle (2.4, 2.5);
+        \node[font=\tiny] at (0.4, 2) {1.0};
+        \node[font=\tiny] at (1.2, 2) {0.5};
+        \node[font=\tiny] at (2.0, 2) {0.2};
+        \node[font=\tiny] at (0.4, 1) {0.3};
+        \node[font=\tiny] at (1.2, 1) {0.8};
+        \node[font=\tiny] at (2.0, 1) {0.1};
+        \draw (0, 1.5) -- (2.4, 1.5);
+        \node[font=\tiny, left] at (0, 2) {gato};
+        \node[font=\tiny, left] at (0, 1) {come};
+        
+        % Times
+        \node[font=\scriptsize] at (3, 1.5) {$\times$};
+        
+        % K^T matrix
+        \node[font=\scriptsize\bfseries] at (3.5, 2.8) {$K^T$};
+        \draw (3.6, 0.5) rectangle (5.4, 2.5);
+        \node[font=\tiny] at (4.1, 2) {0.9};
+        \node[font=\tiny] at (4.9, 2) {0.2};
+        \node[font=\tiny] at (4.1, 1.5) {0.4};
+        \node[font=\tiny] at (4.9, 1.5) {0.7};
+        \node[font=\tiny] at (4.1, 1) {0.3};
+        \node[font=\tiny] at (4.9, 1) {0.1};
+        \draw (3.6, 1.5) -- (5.4, 1.5);
+        
+        % Arrow
+        \node[font=\scriptsize] at (6, 1.5) {$\rightarrow$};
+        
+        % Result
+        \node[font=\scriptsize\bfseries] at (7, 2.8) {Scores};
+        \draw (6.5, 0.5) rectangle (8.9, 2.5);
+        \node[font=\tiny] at (7.2, 2) {1.16};
+        \node[font=\tiny] at (8.2, 2) {0.57};
+        \node[font=\tiny] at (7.2, 1) {0.62};
+        \node[font=\tiny] at (8.2, 1) {0.63};
+        \draw (6.5, 1.5) -- (8.9, 1.5);
+        
+        % Softmax arrow
+        \node[font=\scriptsize] at (9.5, 1.5) {$\xrightarrow{\text{softmax}}$};
+        
+        % Attention weights
+        \node[font=\scriptsize\bfseries] at (11.2, 2.8) {Pesos $\alpha$};
+        \draw (10.3, 0.5) rectangle (12.7, 2.5);
+        \node[font=\tiny, red] at (11, 2) {\textbf{0.64}};
+        \node[font=\tiny] at (12, 2) {0.36};
+        \node[font=\tiny] at (11, 1) {0.50};
+        \node[font=\tiny] at (12, 1) {0.50};
+        \draw (10.3, 1.5) -- (12.7, 1.5);
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \textbf{Lectura:} ``gato'' atiende más a sí mismo (0.64) que a ``come'' (0.36). ``come'' atiende equitativamente a ambos.
+    
+    \vspace{0.2cm}
+    Los pesos finales se multiplican por $V$ para obtener la representación contextualizada de cada token.
+\end{frame}
+
+%===========================================================
+% SECCIÓN 7: HACIA EL TRANSFORMER
+%===========================================================
+\section{Hacia el Transformer}
+
+\begin{comment}
+\begin{frame}{Multi-Head Attention: Atender a Múltiples Cosas}
+    \begin{block}{Problema}
+        Un solo mecanismo de atención captura UNA relación. Pero las palabras tienen múltiples relaciones simultáneas (sintáctica, semántica, referencial...).
+    \end{block}
+    
+    \centering
+    \begin{tikzpicture}[scale=0.75, transform shape]
+        \tikzset{
+            head/.style={rectangle, rounded corners, draw, minimum width=2cm, minimum height=0.6cm, font=\tiny, align=center}
+        }
+        
+        \node[head, fill=blue!20] (input) at (0, 0) {Input};
+        
+        \node[head, fill=red!20] (h1) at (4, 1.5) {Head 1: relaciones sintácticas};
+        \node[head, fill=green!20] (h2) at (4, 0.5) {Head 2: relaciones semánticas};
+        \node[head, fill=yellow!20] (h3) at (4, -0.5) {Head 3: correferencia};
+        \node[head, fill=purple!20] (h4) at (4, -1.5) {Head 4: posición relativa};
+        
+        \node[head, fill=orange!20] (concat) at (8, 0) {Concatenar + Proyectar};
+        \node[head, fill=blue!30] (out) at (12, 0) {Output};
+        
+        \draw[->, thick] (input) -- (h1);
+        \draw[->, thick] (input) -- (h2);
+        \draw[->, thick] (input) -- (h3);
+        \draw[->, thick] (input) -- (h4);
+        
+        \draw[->, thick] (h1) -- (concat);
+        \draw[->, thick] (h2) -- (concat);
+        \draw[->, thick] (h3) -- (concat);
+        \draw[->, thick] (h4) -- (concat);
+        
+        \draw[->, thick] (concat) -- (out);
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{equation*}
+        \text{MultiHead}(Q,K,V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)W^O
+    \end{equation*}
+    donde $\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$
+\end{frame}
+\end{comment}
+
+\begin{frame}{2017: ``Attention Is All You Need''}
+    \begin{block}{El Paper que Definió una Era}
+        Vaswani et al. (Google Brain, 2017) --- Propusieron el \textbf{Transformer}: una arquitectura basada \textbf{enteramente} en atención, sin recurrencia ni convoluciones.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \begin{columns}
+        \column{0.48\textwidth}
+        \textbf{Ingredientes clave:}
+        \begin{itemize}
+            \item Self-Attention (multi-head)
+            \item Positional Encoding (para saber el orden)
+            \item Arquitectura Encoder-Decoder
+        \end{itemize}
+        
+        \column{0.48\textwidth}
+        \textbf{¿Por qué fue revolucionario?}
+        \begin{itemize}
+            \item[\faCheck] Paralelizable al 100\% 
+            \item[\faCheck] Conexiones directas entre cualquier par de tokens
+            \item[\faCheck] Escalable a datos masivos
+        \end{itemize}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Impacto}
+        Este paper es el fundamento de GPT, BERT, Claude, Gemini, LLaMA, y prácticamente todos los modelos de lenguaje modernos.
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Línea de Tiempo: Del Perceptrón al Transformer}
+    \centering
+    \begin{tikzpicture}[scale=0.82, transform shape]
+        % Timeline
+        \draw[thick, ->] (0,0) -- (14,0);
+        
+        % Events
+        \foreach \x/\year/\event/\col in {
+            0.5/1958/Perceptrón/gray!30,
+            2.5/1986/Backprop/gray!30,
+            4/1997/LSTM/yellow!30,
+            5.5/2013/Word2Vec/yellow!30,
+            7/2014/Seq2Seq/orange!30,
+            8.5/2014/Atención/red!30,
+            10/2015/Luong Att./red!20,
+            12/2017/Transformer/blue!40
+        } {
+            \fill[\col] (\x-0.3, -0.2) rectangle (\x+0.3, 0.2);
+            \node[above=0.3cm, font=\tiny, text width=1.5cm, align=center, rotate=35, anchor=south west] at (\x-0.3, 0.2) {\event};
+            \node[below=0.3cm, font=\tiny\bfseries] at (\x, -0.2) {\year};
+        }
+        
+        % Highlight
+        \draw[red, thick, dashed] (7.8,-0.8) rectangle (12.8, 1.8);
+        \node[red, font=\tiny\bfseries] at (10.3, -1.1) {La era de la Atención (hoy)};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \textbf{Observación:} El mecanismo de atención no surgió de la nada. Fue la respuesta natural a problemas concretos de las RNNs en traducción automática. Cada avance resolvió limitaciones del anterior.
+\end{frame}
+
+%===========================================================
+% SECCIÓN 8: IMPACTO Y RESUMEN
+%===========================================================
+\section{Impacto y Resumen}
+
+\begin{frame}{Impacto de la Atención Más Allá del NLP}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{\faEye\ Visión por Computadora}
+            \begin{itemize}
+                \item Vision Transformers (ViT) --- imágenes como secuencias de patches
+                \item DALL-E, Stable Diffusion --- generación de imágenes
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{\faMusic\ Audio y Música}
+            \begin{itemize}
+                \item Whisper (transcripción)
+                \item MusicGen (generación musical)
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{\faDna\ Biología}
+            \begin{itemize}
+                \item AlphaFold 2 --- predicción de estructura de proteínas usando atención
+                \item Modelos de secuencias genómicas
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{\faGamepad\ Otros Dominios}
+            \begin{itemize}
+                \item Robótica (planificación de acciones)
+                \item Descubrimiento de fármacos
+                \item Predicción climática
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{comment}
+\begin{frame}{Resumen de la Clase}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \textbf{Ideas Clave:}
+        \begin{enumerate}
+            \item Las RNNs/LSTMs procesan secuencias \textbf{secuencialmente} y sufren el cuello de botella del vector fijo
+            \item Bahdanau (2014) propuso que el decoder \textbf{atienda selectivamente} a posiciones del encoder
+            \item La atención produce pesos dinámicos: distribución de probabilidad sobre la entrada
+            \item Self-attention permite que cada token atienda a \textbf{todos} los demás directamente
+        \end{enumerate}
+        
+        \column{0.48\textwidth}
+        \textbf{Fórmula Central:}
+        \begin{equation*}
+            \text{Att}(Q,K,V) = \text{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right)\!V
+        \end{equation*}
+        
+        \vspace{0.3cm}
+        \textbf{Próxima Clase:}
+        \begin{itemize}
+            \item Clase 13: Arquitectura Transformer completa
+            \item Encoder-Decoder en detalle
+            \item Positional Encoding
+            \item De Transformers a GPT y BERT
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+\end{comment}
+%===========================================================
+% SECCIÓN 9: EJERCICIOS
+%===========================================================
+\section{Ejercicios Propuestos}
+
+\begin{frame}{Ejercicios}
+    \begin{enumerate}
+
+        
+        \item \textbf{Análisis Conceptual:} Explicar con sus propias palabras por qué Self-Attention tiene complejidad $O(n^2)$ respecto a la longitud de la secuencia, y por qué esto es un problema para textos muy largos.
+        
+        \item \textbf{Comparación:} Hacer una tabla comparativa entre RNN, LSTM y mecanismo de Atención en: paralelización, manejo de dependencias largas, complejidad computacional, y interpretabilidad.
+        
+        \item \textbf{Investigación:} Leer el abstract del paper ``Attention Is All You Need'' y explicar en un párrafo: ¿qué problema resolvieron y cuál fue su resultado principal?
+        
+        \item \textbf{(Bonus)} Investigar qué es ``Flash Attention'' y por qué es importante para hacer viable el entrenamiento de LLMs modernos.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Recursos Adicionales}
+    \textbf{Papers fundamentales:}
+    \begin{itemize}
+        \item Bahdanau et al., ``Neural Machine Translation by Jointly Learning to Align and Translate'' (2014)
+        \item Luong et al., ``Effective Approaches to Attention-based NMT'' (2015)
+        \item Vaswani et al., ``Attention Is All You Need'' (2017)
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Recursos visuales e interactivos:}
+    \begin{itemize}
+        \item Jay Alammar: ``The Illustrated Transformer'' (jalammar.github.io)
+        \item 3Blue1Brown: ``Attention in Transformers, Visually Explained'' (YouTube)
+        \item Lilian Weng: ``Attention? Attention!'' (lilianweng.github.io)
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Implementaciones:}
+    \begin{itemize}
+        \item ``The Annotated Transformer'' (Harvard NLP) --- implementación línea por línea en PyTorch
+    \end{itemize}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``Attention is all you need.''\\--- Vaswani et al., 2017}
+\end{frame}
+\end{document}

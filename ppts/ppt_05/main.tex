@@ -1,0 +1,299 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usetikzlibrary{shapes.geometric, arrows, positioning}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 5]{Programación Matemática 2}
+\subtitle{Clase 5: Iteración Rápida y Revisión de Código con IA}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: FILOSOFÍA DE ITERACIÓN RÁPIDA
+%===========================================================
+\section{Filosofía de la Iteración Rápida}
+
+\begin{frame}{El Principio de Iteración Rápida}
+    \begin{block}{Concepto Central}
+        La \textbf{iteración rápida} consiste en producir versiones funcionales del código lo más pronto posible, obtener feedback inmediato, y refinar incrementalmente.
+    \end{block}
+    \vspace{0.3cm}
+    
+    \begin{alertblock}{Mantra del Vibe Coding}
+        \textbf{``Hacer que funcione $\rightarrow$ Hacer que funcione bien $\rightarrow$ Hacer que funcione rápido''}
+    \end{alertblock}
+    \vspace{0.3cm}
+    
+    \centering
+    \textit{No se busca la perfección en el primer intento, sino la mejora continua.}
+\end{frame}
+
+\begin{frame}{El Loop de Feedback}
+    \centering
+    \begin{tikzpicture}[node distance=1.8cm, auto]
+        \tikzstyle{step} = [rectangle, rounded corners, minimum width=2.2cm, minimum height=1cm, text centered, draw=black, fill=blue!20, font=\small]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+        
+        \node (prompt) [step, fill=green!30] {Prompt};
+        \node (generate) [step, right=1.2cm of prompt] {Generar};
+        \node (execute) [step, right=1.2cm of generate] {Ejecutar};
+        \node (evaluate) [step, right=1.2cm of execute] {Evaluar};
+        \node (refine) [step, below=1cm of evaluate] {Refinar};
+        
+        \draw [arrow] (prompt) -- (generate);
+        \draw [arrow] (generate) -- (execute);
+        \draw [arrow] (execute) -- (evaluate);
+        \draw [arrow] (evaluate) -- (refine);
+        \draw [arrow] (refine.west) -- ++(-6.5,0) |- (prompt.south);
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \textbf{Objetivo:} Minimizar el tiempo de cada ciclo. Idealmente, segundos a minutos.
+\end{frame}
+
+\begin{frame}{Estrategias de Iteración}
+    \begin{enumerate}
+        \setlength\itemsep{0.8em}
+        \item \textbf{Divide y vencerás:} Descomponer problemas grandes en funciones pequeñas e independientes.
+        
+        \item \textbf{Happy path primero:} Implementar el flujo principal antes de manejar excepciones.
+        
+        \item \textbf{Hardcoding temporal:} Usar valores fijos para probar lógica, parametrizar después.
+        
+        \item \textbf{Print debugging:} Agregar prints estratégicos para entender el flujo.
+        
+        \item \textbf{Fail fast:} Ejecutar frecuentemente para detectar errores temprano.
+    \end{enumerate}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: DEBUGGING ASISTIDO POR IA
+%===========================================================
+\section{Debugging Asistido por IA}
+
+\begin{frame}{El Nuevo Paradigma del Debugging}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{alertblock}{Debugging Tradicional}
+            \begin{enumerate}
+                \item Leer el mensaje de error
+                \item Buscar en Stack Overflow
+                \item Probar múltiples soluciones
+                \item Agregar prints para rastrear
+                \item Usar debugger paso a paso
+            \end{enumerate}
+        \end{alertblock}
+        
+        \column{0.48\textwidth}
+        \begin{exampleblock}{Debugging con IA}
+            \begin{enumerate}
+                \item Copiar el error y código
+                \item Pegar en el chat de la IA
+                \item Recibir explicación y solución
+                \item Aplicar el fix sugerido
+                \item Iterar si es necesario
+            \end{enumerate}
+        \end{exampleblock}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Técnicas de Debugging con IA}
+    \begin{enumerate}
+        \setlength\itemsep{0.7em}
+        \item \textbf{Explicación de errores:} ``Explica este error y por qué ocurre''
+        
+        \item \textbf{Rastreo de flujo:} ``Muéstrame paso a paso qué hace este código con input X''
+        
+        \item \textbf{Identificación de edge cases:} ``¿Qué inputs podrían causar problemas?''
+        
+        \item \textbf{Comparación:} ``¿Por qué este código funciona pero este otro no?''
+        
+        \item \textbf{Generación de tests:} ``Genera casos de prueba que podrían fallar''
+        
+        \item \textbf{Rubber duck con esteroides:} Explicar el problema a la IA para clarificar el pensamiento.
+    \end{enumerate}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: REFACTORIZACIÓN CON IA
+%===========================================================
+\section{Refactorización con IA}
+
+\begin{frame}{¿Qué es la Refactorización?}
+    \begin{block}{Definición}
+        La \textbf{refactorización} es el proceso de reestructurar código existente sin cambiar su comportamiento externo, mejorando su estructura interna.
+    \end{block}
+    \vspace{0.3cm}
+    
+    \textbf{Objetivos:}
+    \begin{itemize}
+        \item Mejorar la legibilidad
+        \item Reducir la complejidad
+        \item Eliminar duplicación
+        \item Mejorar el rendimiento
+        \item Facilitar el mantenimiento
+    \end{itemize}
+    \vspace{0.3cm}
+    
+    \centering
+    \textit{``Los buenos programadores escriben código que los humanos entienden.''} — Martin Fowler
+\end{frame}
+
+\begin{frame}{Tipos de Refactorización con IA}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Estructural}
+            \begin{itemize}
+                \item Extraer funciones
+                \item Simplificar condicionales
+                \item Eliminar código muerto
+                \item Renombrar variables
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Rendimiento}
+            \begin{itemize}
+                \item Optimizar algoritmos
+                \item Usar estructuras de datos correctas
+                \item Eliminar operaciones redundantes
+                \item Aplicar patrones eficientes
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    
+    \vspace{0.5cm}
+    \begin{exampleblock}{Prompts Útiles}
+        ``Refactorizar siguiendo SRP'' | ``Optimizar de O(n²) a O(n)'' | ``Convertir a list comprehension''
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 4: CODE REVIEW CON IA
+%===========================================================
+\section{Code Review con IA}
+
+\begin{frame}{Code Review Automatizado}
+    \begin{block}{¿Qué puede revisar la IA?}
+        \begin{itemize}
+            \item \textbf{Bugs potenciales:} Null references, off-by-one, race conditions
+            \item \textbf{Seguridad:} SQL injection, XSS, manejo de secretos
+            \item \textbf{Estilo:} PEP 8, convenciones del proyecto
+            \item \textbf{Rendimiento:} Algoritmos ineficientes, memory leaks
+            \item \textbf{Mantenibilidad:} Código duplicado, funciones muy largas
+        \end{itemize}
+    \end{block}
+    
+    \vspace{0.3cm}
+    \centering
+    \textit{La IA no reemplaza el code review humano, lo complementa.}
+\end{frame}
+
+\begin{frame}{Checklist de Code Review}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Funcionalidad}
+            \begin{itemize}
+                \item[\faCheckSquare] ¿Hace lo que debe?
+                \item[\faCheckSquare] ¿Maneja edge cases?
+                \item[\faCheckSquare] ¿Errores manejados?
+                \item[\faCheckSquare] ¿Inputs validados?
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Seguridad}
+            \begin{itemize}
+                \item[\faCheckSquare] ¿Inputs sanitizados?
+                \item[\faCheckSquare] ¿Secrets seguros?
+                \item[\faCheckSquare] ¿Sin vulnerabilidades?
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Rendimiento}
+            \begin{itemize}
+                \item[\faCheckSquare] ¿Complejidad adecuada?
+                \item[\faCheckSquare] ¿Operaciones necesarias?
+                \item[\faCheckSquare] ¿Estructuras correctas?
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Mantenibilidad}
+            \begin{itemize}
+                \item[\faCheckSquare] ¿Código legible?
+                \item[\faCheckSquare] ¿Responsabilidad única?
+                \item[\faCheckSquare] ¿Tests incluidos?
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+
+
+%===========================================================
+% SECCIÓN 6: EJERCICIOS
+%===========================================================
+\section{Ejercicios Propuestos}
+
+\begin{frame}{Ejercicios de Iteración y Debugging}
+    \begin{enumerate}
+        \setlength\itemsep{0.8em}
+        \item \textbf{Debugging:} Corregir una función con 3 bugs usando IA para identificarlos.
+        
+        \item \textbf{Refactorización:} Tomar una función de 50+ líneas y dividirla siguiendo SRP.
+        
+        \item \textbf{Optimización:} Convertir una función $O(n^2)$ a $O(n)$ con ayuda de IA.
+        
+        \item \textbf{Code Review:} Realizar review completo de un módulo, identificando 5 mejoras.
+
+    \end{enumerate}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Próxima clase:} Ingeniería de Software: Git
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``Genera rápido, itera hasta que funcione.''}
+\end{frame}
+
+\end{document}

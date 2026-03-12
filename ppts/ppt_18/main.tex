@@ -1,0 +1,401 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, decorations.pathreplacing}
+%--- Configuración de Listings ---
+\lstdefinestyle{codestyle}{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    columns=fullflexible,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{red!70!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=5pt
+}
+\lstdefinestyle{cppstyle}{
+    style=codestyle,
+    language=C++,
+    morekeywords={vector, string, pair, set, map, queue, stack, priority_queue, unordered_map, unordered_set, push_back, begin, end, size, empty, sort, auto}
+}
+\lstdefinestyle{pythonstyle}{
+    style=codestyle,
+    language=Python,
+    morekeywords={def, return, for, in, range, if, else, elif, while, True, False, None, print, input, int, str, list, len, sorted, enumerate}
+}
+\lstdefinestyle{pseudostyle}{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{blue!5},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    columns=fullflexible,
+    mathescape=true
+}
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 22]{Programación Matemática 2}
+\subtitle{Clase 22: Complejidad Computacional --- Notación Big $O$}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+\begin{document}
+%--- 1. Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+%--- 2. Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+%===========================================================
+% SECCIÓN 1: MOTIVACIÓN
+%===========================================================
+\section{¿Por Qué Medir la Eficiencia?}
+%--- 3 ---
+\begin{frame}{El Problema: No Todo Código Correcto es Buen Código}
+
+    
+    \vspace{0.3cm}
+    \begin{block}{¿Cuánto importa la diferencia?}
+        Supongamos $n = 10^6$ elementos y una computadora ejecuta $10^8$ operaciones/segundo:
+    \end{block}
+    
+    \centering
+    \begin{table}[]
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{l c c}
+            \toprule
+            \textbf{Complejidad} & \textbf{Operaciones} & \textbf{Tiempo} \\
+            \midrule
+            $O(n)$ & $10^6$ & $\sim$0.01 s \\
+            $O(n \log n)$ & $\sim 2 \times 10^7$ & $\sim$0.2 s \\
+            $O(n^2)$ & $10^{12}$ & $\sim$2.8 \textbf{horas} \\
+            $O(2^n)$ & $10^{301{,}029}$ & más que la edad del universo \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.2cm}
+    La diferencia entre un algoritmo $O(n)$ y $O(n^2)$ no es ``un poco más lento'': es la diferencia entre \textbf{0.01 segundos y 2.8 horas}.
+\end{frame}
+%--- 4 ---
+\begin{frame}{Motivación: Hardware vs Algoritmos}
+    \centering
+    \begin{tikzpicture}[scale=0.85, transform shape]
+        \tikzset{
+            box/.style={rectangle, rounded corners, minimum width=3.5cm, minimum height=1.2cm, draw, font=\scriptsize, align=center}
+        }
+        
+        \node[box, fill=red!20] (slow) at (0,2) {\textbf{PC lenta} + \textbf{buen algoritmo}\\$10^6$ ops/s con $O(n \log n)$\\$\approx 20$ segundos};
+        \node[box, fill=blue!20] (fast) at (7,2) {\textbf{Supercomputadora} + \textbf{mal algo}\\$10^{12}$ ops/s con $O(n^2)$\\$\approx 1000$ segundos};
+        
+        \node[font=\Large] at (3.5, 2) {\textbf{vs}};
+        
+        \node[box, fill=green!20] (winner) at (3.5, -0.5) {La PC lenta con buen algoritmo\\gana por 50$\times$};
+        
+        \draw[->, thick] (slow.south) -- (winner.north west);
+        \draw[->, thick] (fast.south) -- (winner.north east);
+    \end{tikzpicture}
+    
+    \vspace{0.4cm}
+    \begin{alertblock}{Lección}
+        Comprar mejor hardware da mejoras lineales. Elegir un mejor algoritmo puede dar mejoras \textbf{exponenciales}. Por eso necesitamos un lenguaje formal para comparar algoritmos: la \textbf{Notación Big $O$}.
+    \end{alertblock}
+\end{frame}
+%===========================================================
+% SECCIÓN 2: DEFINICIÓN FORMAL
+%===========================================================
+\section{Definición Formal de Big $O$}
+%--- 5 ---
+\begin{frame}{Definición Matemática}
+    \begin{block}{Notación Big $O$ (Cota Superior Asintótica)}
+        Decimos que $f(n) = O(g(n))$ si existen constantes $c > 0$ y $n_0 \geq 0$ tales que:
+        $$f(n) \leq c \cdot g(n) \quad \text{para todo } n \geq n_0$$
+    \end{block}
+    
+    \vspace{0.2cm}
+    \centering
+    \begin{tikzpicture}[scale=0.7]
+        \draw[->] (0,0) -- (8,0) node[right] {\scriptsize $n$};
+        \draw[->] (0,0) -- (0,5) node[above] {\scriptsize ops};
+        
+        % f(n)
+        \draw[blue, thick, domain=0.5:7, samples=50] plot (\x, {0.08*\x*\x + 0.3*\x});
+        \node[blue, font=\scriptsize] at (7.5, 4.5) {$f(n)$};
+        
+        % c * g(n)
+        \draw[red, thick, dashed, domain=0.5:7, samples=50] plot (\x, {0.12*\x*\x});
+        \node[red, font=\scriptsize] at (7.5, 6) {$c \cdot g(n)$};
+        
+        % n_0
+        \draw[gray, dashed] (2, 0) -- (2, 5);
+        \node[gray, font=\scriptsize, below] at (2, 0) {$n_0$};
+        
+        % Annotation
+        \draw[decorate, decoration={brace, amplitude=4pt}] (7.1, 4.3) -- (7.1, 5.8);
+        \node[font=\tiny, right] at (7.2, 5.05) {$f \leq cg$};
+    \end{tikzpicture}
+    
+    \vspace{0.2cm}
+    \textbf{Intuición:} Big $O$ describe el \textbf{peor caso} de crecimiento cuando $n \rightarrow \infty$. Ignoramos constantes y términos menores.
+\end{frame}
+%--- 6 ---
+\begin{frame}{¿Qué Ignoramos y Por Qué?}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Ignoramos constantes}
+            $3n^2$ y $100n^2$ son ambos $O(n^2)$.
+            
+            \vspace{0.2cm}
+            \textbf{¿Por qué?} Las constantes dependen del hardware, lenguaje, compilador. Lo que importa es cómo \textbf{escala} con $n$.
+        \end{block}
+        
+        \begin{exampleblock}{Ejemplo}
+            $f(n) = 5n^2 + 3n + 7$
+            
+            \vspace{0.1cm}
+            $= O(n^2)$
+            
+            \vspace{0.1cm}
+            Porque cuando $n \rightarrow \infty$, el término $n^2$ domina completamente.
+        \end{exampleblock}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Ignoramos términos menores}
+            $n^2 + n + \log n = O(n^2)$
+            
+            \vspace{0.2cm}
+            \textbf{¿Por qué?} Para $n = 10^6$: el término $n^2 = 10^{12}$ mientras que $n = 10^6$ es despreciable.
+        \end{block}
+        
+        \begin{alertblock}{Notaciones hermanas}
+            \begin{itemize}
+                \item $\Omega(g(n))$: cota \textbf{inferior}
+                \item $\Theta(g(n))$: cota \textbf{exacta} (ajustada)
+                \item En CP usamos Big $O$ casi siempre
+            \end{itemize}
+        \end{alertblock}
+    \end{columns}
+\end{frame}
+%===========================================================
+% SECCIÓN 3: COMPLEJIDADES COMUNES
+%===========================================================
+\section{Las Complejidades Más Comunes}
+%--- 7 ---
+\begin{frame}{Jerarquía de Complejidades}
+    \centering
+    \begin{tikzpicture}[scale=0.65]
+        \draw[->] (0,0) -- (10,0) node[right] {\scriptsize $n$};
+        \draw[->] (0,0) -- (0,8) node[above] {\scriptsize operaciones};
+        
+        % O(1)
+        \draw[green!60!black, very thick, domain=0.3:9.5] plot (\x, {0.5});
+        \node[green!60!black, font=\tiny, right] at (9.5, 0.5) {$O(1)$};
+        
+        % O(log n)
+        \draw[blue!70, very thick, domain=0.3:9.5, samples=50] plot (\x, {0.7*ln(\x+1)});
+        \node[blue!70, font=\tiny, right] at (9.5, 1.65) {$O(\log n)$};
+        
+        % O(n)
+        \draw[cyan!70!black, very thick, domain=0.3:9.5] plot (\x, {0.35*\x});
+        \node[cyan!70!black, font=\tiny, right] at (9.5, 3.3) {$O(n)$};
+        
+        % O(n log n)
+        \draw[orange, very thick, domain=0.3:9.5, samples=50] plot (\x, {0.2*\x*ln(\x+1)});
+        \node[orange, font=\tiny, right] at (9.5, 4.55) {$O(n\log n)$};
+        
+        % O(n^2)
+        \draw[red!70, very thick, domain=0.3:7, samples=50] plot (\x, {0.15*\x*\x});
+        \node[red!70, font=\tiny, right] at (7.2, 7.5) {$O(n^2)$};
+        
+        % O(2^n)
+        \draw[purple, very thick, domain=0.3:4.5, samples=50] plot (\x, {0.1*pow(2,\x)});
+        \node[purple, font=\tiny, right] at (4.7, 7.5) {$O(2^n)$};
+        
+        % Zone labels
+        \draw[green!30, fill=green!5, opacity=0.3] (0,0) rectangle (10, 2);
+        \draw[yellow!50, fill=yellow!5, opacity=0.3] (0,2) rectangle (10, 5);
+        \draw[red!30, fill=red!5, opacity=0.3] (0,5) rectangle (10, 8);
+        
+        \node[font=\tiny, green!50!black] at (1, 1.5) {eficiente};
+        \node[font=\tiny, orange!70!black] at (1, 3.5) {aceptable};
+        \node[font=\tiny, red!70!black] at (1, 6.5) {peligro};
+    \end{tikzpicture}
+    
+    \vspace{0.2cm}
+    $$O(1) < O(\log n) < O(\sqrt{n}) < O(n) < O(n \log n) < O(n^2) < O(n^3) < O(2^n) < O(n!)$$
+\end{frame}
+%--- 8 ---
+\begin{frame}{Tabla de Referencia: Complejidades Comunes}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.25}
+        \scriptsize
+        \begin{tabular}{l l l p{4.5cm}}
+            \toprule
+            \textbf{Big $O$} & \textbf{Nombre} & \textbf{$n=10^6$} & \textbf{Ejemplo típico} \\
+            \midrule
+            $O(1)$ & Constante & 1 & Acceso a array por índice \\
+            $O(\log n)$ & Logarítmica & $\sim$20 & Búsqueda binaria \\
+            $O(\sqrt{n})$ & Raíz & $\sim$1000 & Factorización por prueba \\
+            $O(n)$ & Lineal & $10^6$ & Recorrido de array \\
+            $O(n \log n)$ & Linearítmica & $\sim 2 \times 10^7$ & Merge sort, sort de STL \\
+            $O(n^2)$ & Cuadrática & $10^{12}$ & Doble for anidado \\
+            $O(n^3)$ & Cúbica & $10^{18}$ & Multiplicación de matrices naive \\
+            $O(2^n)$ & Exponencial & $10^{301{,}029}$ & Subconjuntos, backtracking \\
+            $O(n!)$ & Factorial & $\infty$ práctico & Permutaciones \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.2cm}
+    \begin{block}{Regla práctica para CP}
+        Con límite de 1--2 segundos y $\sim10^8$ ops/s: si $n \leq 10^7$ usa $O(n)$, si $n \leq 10^5$ puedes usar $O(n \log n)$, si $n \leq 5000$ puedes usar $O(n^2)$, si $n \leq 20$ puedes usar $O(2^n)$.
+    \end{block}
+\end{frame}
+%===========================================================
+% SECCIÓN 4: CÓMO CALCULAR
+%===========================================================
+\section{Cómo Calcular la Complejidad}
+%--- 9 ---
+\begin{frame}{Reglas Básicas de Cálculo}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Regla 1: Secuencia}
+            Operaciones consecutivas: se \textbf{suman} y domina la mayor.
+            $$O(n) + O(n^2) = O(n^2)$$
+        \end{block}
+        
+        \begin{block}{Regla 2: Ciclos Anidados}
+            Ciclos dentro de ciclos: se \textbf{multiplican}.
+            $$O(n) \times O(n) = O(n^2)$$
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Regla 3: Condicionales}
+            Se toma el \textbf{peor caso} de las ramas.
+            $$\max(O(n), O(\log n)) = O(n)$$
+        \end{block}
+        
+        \begin{block}{Regla 4: Llamadas a función}
+            Se multiplica el costo de la llamada por cuántas veces se llama.
+            $$n \times O(\log n) = O(n \log n)$$
+        \end{block}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Resumen}
+        Secuencia $\rightarrow$ suma (domina la mayor). Anidamiento $\rightarrow$ multiplicación.
+    \end{exampleblock}
+\end{frame}
+
+%--- 17 ---
+\begin{frame}{Errores Comunes al Analizar Complejidad}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{alertblock}{1. Confundir $O$ con tiempo exacto}
+            $O(n)$ NO significa ``$n$ operaciones''. Significa que crece \textbf{proporcionalmente} a $n$. Podría ser $3n + 5$ o $100n$.
+        \end{alertblock}
+        
+        \begin{alertblock}{2. Ignorar operaciones ocultas}
+            \texttt{sort()} dentro de un ciclo:
+            
+            \vspace{0.1cm}
+            \texttt{for i in range(n):}\\
+            \quad \texttt{sort(arr)} \quad $\leftarrow O(n \log n)$
+            
+            \vspace{0.1cm}
+            Total: $O(n^2 \log n)$, no $O(n)$.
+        \end{alertblock}
+        
+        \column{0.48\textwidth}
+        \begin{alertblock}{3. Olvidar el costo de strings}
+            En C++, comparar dos strings de largo $m$ es $O(m)$, no $O(1)$. Concatenar en un ciclo: $O(nm)$.
+        \end{alertblock}
+        
+        \begin{alertblock}{4. Asumir hash es siempre $O(1)$}
+            \texttt{unordered\_map} es $O(1)$ \textbf{promedio}, pero $O(n)$ en peor caso (colisiones). En Codeforces, adversarios pueden forzar peor caso con anti-hash tests.
+        \end{alertblock}
+    \end{columns}
+\end{frame}
+%===========================================================
+% SECCIÓN 8: RESUMEN
+%===========================================================
+\section{Resumen y Ejercicios}
+%--- 18 ---
+\begin{frame}{Resumen: Checklist de Análisis de Complejidad}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \textbf{Para analizar código:}
+        \begin{itemize}
+            \item[$\square$] Identificar ciclos y su rango
+            \item[$\square$] Multiplicar ciclos anidados
+            \item[$\square$] Verificar si variables ``nunca retroceden''
+            \item[$\square$] Contar costo de funciones internas (\texttt{sort}, \texttt{find}, concatenación)
+            \item[$\square$] Aplicar Teorema Maestro si hay recursión
+        \end{itemize}
+        
+        \column{0.48\textwidth}
+        \textbf{Para elegir algoritmo en CP:}
+        \begin{itemize}
+            \item[$\square$] Leer restricciones de $n$
+            \item[$\square$] Calcular operaciones máximas ($\leq 10^8$)
+            \item[$\square$] Descartar complejidades que excedan
+            \item[$\square$] Considerar espacio ($\leq$ 256 MB)
+            \item[$\square$] Probar con los casos extremos
+        \end{itemize}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \begin{block}{Regla de Oro}
+        Siempre calcula las operaciones \textbf{antes} de programar. Si $n = 10^5$ y tu idea es $O(n^2)$, no la implementes: busca un mejor algoritmo primero.
+    \end{block}
+    
+    \vspace{0.2cm}
+    \textbf{Próxima clase:} Clase 23 --- \textbf{Estructuras de Datos Avanzadas}
+\end{frame}
+%--- 19 ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textbf{Ejercicios:}\\
+    1. Analizar la complejidad de 5 fragmentos de código (entregable)\\
+    2. CSES: Sum of Two Values, Maximum Subarray Sum\\
+    3. Dado $n \leq 10^6$, diseñar solución $O(n)$ para encontrar el segundo máximo\\[0.3cm]
+    \textbf{Recursos:} Cap. 2 de Laaksonen, \textit{Competitive Programmer's Handbook}\\
+    CLRS Cap. 3: \textit{Growth of Functions}
+    
+    \vspace{0.3cm}
+    \scriptsize
+    \textit{``Premature optimization is the root of all evil ---\\but never neglect asymptotic complexity.''\\--- adaptado de Donald Knuth}
+\end{frame}
+\end{document}

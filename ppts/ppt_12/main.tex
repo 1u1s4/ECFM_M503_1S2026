@@ -1,0 +1,833 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{amsmath}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, decorations.pathreplacing, patterns, fit}
+
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 12]{Programación Matemática 2}
+\subtitle{Clase 12: Historia de la IA - El Surgimiento del Mecanismo de Atención}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+
+\begin{document}
+
+%--- Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+%--- Diapositiva: Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+
+%===========================================================
+% SECCIÓN 1: RECAPITULACIÓN
+%===========================================================
+\section{Recapitulación: El Problema de las Secuencias}
+
+\begin{frame}{Lo que Vimos en la Clase 11}
+    \centering
+    \begin{tikzpicture}[scale=0.8]
+        % Timeline
+        \draw[thick, ->] (0,0) -- (12,0);
+        
+        \foreach \x/\year/\event in {
+            1/1958/Perceptrón,
+            3/1986/Backprop,
+            5/1997/LSTM,
+            7/2012/AlexNet,
+            9/2014/Atención,
+            11/2017/Transformer
+        } {
+            \draw (\x,0.15) -- (\x,-0.15);
+            \node[below, font=\tiny] at (\x,-0.2) {\year};
+            \node[above, font=\tiny, text width=1.3cm, align=center] at (\x,0.3) {\event};
+        }
+        
+        % Highlight current topic
+        \draw[red, thick, rounded corners] (8.3,-0.8) rectangle (11.7,1);
+        \node[red, font=\scriptsize] at (10,-1.1) {Hoy: de aquí al Transformer};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \textbf{Resumen clase anterior:}
+    \begin{itemize}
+        \item CNNs revolucionaron visión por computadora (2012)
+        \item RNNs procesan secuencias (texto, audio, series de tiempo)
+        \item LSTMs solucionaron el problema de memoria a largo plazo
+        \item Pero... aún había problemas fundamentales
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{RNNs: Procesamiento Secuencial}
+    \centering
+    \begin{tikzpicture}[scale=0.85]
+        % RNN cells
+        \foreach \i in {0,1,2,3,4} {
+            \node[circle, draw, fill=yellow!30, minimum size=0.9cm] (h\i) at (\i*2.2,0) {$h_{\i}$};
+            \node[circle, draw, fill=blue!20, minimum size=0.7cm] (x\i) at (\i*2.2,-1.5) {$x_{\i}$};
+            \draw[->, thick] (x\i) -- (h\i);
+        }
+        
+        % Recurrent connections
+        \foreach \i in {0,1,2,3} {
+            \pgfmathtruncatemacro{\j}{\i+1}
+            \draw[->, thick, red] (h\i) -- (h\j);
+        }
+        
+        % Labels
+        \node[below, font=\scriptsize] at (0,-2) {El};
+        \node[below, font=\scriptsize] at (2.2,-2) {gato};
+        \node[below, font=\scriptsize] at (4.4,-2) {se};
+        \node[below, font=\scriptsize] at (6.6,-2) {sentó};
+        \node[below, font=\scriptsize] at (8.8,-2) {...};
+        
+        % Time arrow
+        \draw[->, thick, gray] (0,-2.8) -- (9,-2.8) node[right, font=\scriptsize] {Tiempo};
+    \end{tikzpicture}
+    
+    \vspace{0.4cm}
+    \begin{alertblock}{Problema 1: Procesamiento Secuencial}
+        Cada paso depende del anterior $\rightarrow$ \textbf{no se puede paralelizar}. Entrenar secuencias largas es muy lento.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{El Problema del Contexto Fijo}
+    \centering
+    \begin{tikzpicture}[scale=0.8]
+        % Encoder
+        \node[font=\scriptsize\bfseries] at (-1,1.5) {Encoder};
+        \foreach \i in {0,1,2,3} {
+            \node[circle, draw, fill=blue!20, minimum size=0.7cm] (e\i) at (\i*1.5,0) {};
+        }
+        \foreach \i in {0,1,2} {
+            \pgfmathtruncatemacro{\j}{\i+1}
+            \draw[->, thick] (e\i) -- (e\j);
+        }
+        
+        % Context vector
+        \node[rectangle, draw, fill=red!30, minimum width=0.8cm, minimum height=1.2cm] (ctx) at (6,0) {$\vec{c}$};
+        \draw[->, thick] (e3) -- (ctx);
+        
+        % Decoder
+        \node[font=\scriptsize\bfseries] at (11,1.5) {Decoder};
+        \foreach \i in {0,1,2,3} {
+            \node[circle, draw, fill=green!20, minimum size=0.7cm] (d\i) at (8+\i*1.5,0) {};
+            \draw[->, thick, dashed] (ctx) -- (d\i);
+        }
+        \foreach \i in {0,1,2} {
+            \pgfmathtruncatemacro{\j}{\i+1}
+            \draw[->, thick] (d\i) -- (d\j);
+        }
+        
+        % Labels
+        \node[below, font=\tiny] at (0,-0.6) {The};
+        \node[below, font=\tiny] at (1.5,-0.6) {cat};
+        \node[below, font=\tiny] at (3,-0.6) {sat};
+        \node[below, font=\tiny] at (4.5,-0.6) {down};
+        
+        \node[below, font=\tiny] at (8,-0.6) {El};
+        \node[below, font=\tiny] at (9.5,-0.6) {gato};
+        \node[below, font=\tiny] at (11,-0.6) {se};
+        \node[below, font=\tiny] at (12.5,-0.6) {sentó};
+        
+        % Bottleneck annotation
+        \draw[decorate, decoration={brace, amplitude=5pt}] (5.5,1.5) -- (6.5,1.5);
+        \node[above, font=\tiny, red] at (6,1.7) {¡Cuello de botella!};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Problema 2: Vector de Contexto Fijo}
+        Toda la oración de entrada debe comprimirse en UN solo vector $\vec{c}$. Para oraciones largas, se pierde información.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{El Problema de las Dependencias Largas}
+    \centering
+    \begin{tikzpicture}
+        \node[font=\small, text width=12cm, align=left] at (0,0) {
+            ``\textcolor{blue}{The cat}, which was sitting on the mat that my grandmother bought last summer when she visited the old furniture store downtown, \textcolor{blue}{was} very happy.''
+        };
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \begin{tikzpicture}[scale=0.8]
+        % Words
+        \node (w1) at (0,0) {The cat};
+        \node (w2) at (3,0) {...20 palabras...};
+        \node (w3) at (6,0) {was};
+        
+        % Connection
+        \draw[->, thick, blue, bend left=40] (w1) to node[above, font=\tiny] {¿conexión?} (w3);
+        
+        % Gradient
+        \draw[->, red, thick] (6,-0.8) -- (0,-0.8);
+        \node[below, font=\tiny, red] at (3,-0.8) {Gradiente se desvanece};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Problema 3: Dependencias a Larga Distancia}
+        Aunque LSTMs ayudan, las RNNs aún luchan para conectar información muy separada. El gradiente se ``diluye'' al retroceder muchos pasos.
+    \end{alertblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 2: LA IDEA DE ATENCIÓN
+%===========================================================
+\section{La Idea Revolucionaria: Atención}
+
+\begin{frame}{Inspiración: ¿Cómo Traducen los Humanos?}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Enfoque RNN (incorrecto):}
+        \begin{enumerate}
+            \item Leer toda la oración en inglés
+            \item ``Comprimir'' en la mente
+            \item Escribir traducción al español
+            \item Sin mirar atrás
+        \end{enumerate}
+        
+        \vspace{0.3cm}
+        \textbf{Enfoque Humano Real:}
+        \begin{enumerate}
+            \item Leer la oración
+            \item Al traducir cada palabra...
+            \item \textbf{Mirar de nuevo} las palabras relevantes
+            \item Enfocarse donde es necesario
+        \end{enumerate}
+        
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7]
+            % Source sentence
+            \node[font=\scriptsize] (s1) at (0,3) {The};
+            \node[font=\scriptsize] (s2) at (1,3) {black};
+            \node[font=\scriptsize] (s3) at (2,3) {cat};
+            \node[font=\scriptsize] (s4) at (3,3) {sat};
+            
+            % Target word being generated
+            \node[font=\scriptsize, fill=yellow!30, rounded corners] (t1) at (1.5,0) {gato};
+            
+            % Attention weights (visual)
+            \draw[thick, opacity=0.2] (s1) -- (t1);
+            \draw[thick, opacity=0.3] (s2) -- (t1);
+            \draw[thick, opacity=0.9, red] (s3) -- (t1);
+            \draw[thick, opacity=0.1] (s4) -- (t1);
+            
+            % Attention label
+            \node[font=\tiny, red] at (2.5,1.5) {Atención alta};
+            
+            \node[below, font=\scriptsize] at (1.5,-0.5) {``¿Qué palabras debo mirar?''};
+        \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Bahdanau et al. 2014: El Paper Fundacional}
+    \begin{block}{``Neural Machine Translation by Jointly Learning to Align and Translate''}
+        Dzmitry Bahdanau, Kyunghyun Cho, Yoshua Bengio\\
+        \textit{ICLR 2015 (arXiv 2014)}
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{La innovación clave:}
+    \begin{itemize}
+        \item En lugar de un vector de contexto \textbf{fijo}...
+        \item Crear un vector de contexto \textbf{dinámico} para cada palabra de salida
+        \item El modelo ``aprende a alinear'' entrada y salida
+        \item Puede ``mirar atrás'' a cualquier parte de la entrada
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Resultado}
+        Mejora dramática en traducción automática, especialmente para oraciones largas.
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Atención: La Intuición}
+    \centering
+    \begin{tikzpicture}[scale=0.85, transform shape]
+        % Encoder hidden states
+        \node[font=\scriptsize\bfseries] at (-0.5,2.5) {Encoder};
+        \foreach \i/\word in {0/The, 1/cat, 2/is, 3/black} {
+            \node[circle, draw, fill=blue!20, minimum size=0.8cm] (h\i) at (\i*2,2) {$h_{\i}$};
+            \node[below, font=\tiny] at (\i*2,1.3) {\word};
+        }
+        
+        % Current decoder state
+        \node[circle, draw, fill=green!30, minimum size=1cm] (s) at (3,-1) {$s_t$};
+        \node[below, font=\tiny] at (3,-1.8) {Decoder: generando ``negro''};
+        
+        % Attention weights
+        \draw[thick, opacity=0.2] (h0) -- node[left, font=\tiny, opacity=1] {0.05} (s);
+        \draw[thick, opacity=0.3] (h1) -- node[left, font=\tiny, opacity=1] {0.10} (s);
+        \draw[thick, opacity=0.1] (h2) -- node[right, font=\tiny, opacity=1] {0.05} (s);
+        \draw[thick, opacity=0.9, red] (h3) -- node[right, font=\tiny, opacity=1] {\textbf{0.80}} (s);
+        
+        % Context vector
+        \node[rectangle, draw, fill=orange!30, minimum width=1.5cm, minimum height=0.6cm] (ctx) at (8,-1) {$c_t$};
+        \draw[->, thick] (s) -- node[above, font=\tiny] {pesos} (ctx);
+        
+        % Annotation
+        \node[font=\scriptsize, text width=3cm, align=center] at (8,-2.5) {Contexto dinámico\\(promedio ponderado)};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \[
+    c_t = \sum_{i} \alpha_{ti} \cdot h_i \quad \text{donde} \quad \sum_i \alpha_{ti} = 1
+    \]
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: CÓMO FUNCIONA
+%===========================================================
+\section{¿Cómo Funciona la Atención?}
+
+\begin{frame}{Los Tres Componentes: Query, Key, Value}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Analogía: Búsqueda en una biblioteca}
+        \begin{itemize}
+            \item \textbf{Query (Q):} Lo que estás buscando\\
+            \textit{``Quiero información sobre gatos''}
+            \item \textbf{Key (K):} Etiquetas de los libros\\
+            \textit{``Animales'', ``Historia'', ``Cocina''...}
+            \item \textbf{Value (V):} El contenido de los libros\\
+            \textit{El texto real que quieres leer}
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.8]
+            % Query
+            \node[rectangle, draw, fill=red!20, minimum width=1.5cm, minimum height=0.8cm] (q) at (0,0) {Query};
+            
+            % Keys
+            \node[rectangle, draw, fill=blue!20, minimum width=1cm, minimum height=0.6cm] (k1) at (3,1.5) {$K_1$};
+            \node[rectangle, draw, fill=blue!20, minimum width=1cm, minimum height=0.6cm] (k2) at (3,0.5) {$K_2$};
+            \node[rectangle, draw, fill=blue!20, minimum width=1cm, minimum height=0.6cm] (k3) at (3,-0.5) {$K_3$};
+            \node[rectangle, draw, fill=blue!20, minimum width=1cm, minimum height=0.6cm] (k4) at (3,-1.5) {$K_4$};
+            
+            % Values
+            \node[rectangle, draw, fill=green!20, minimum width=1cm, minimum height=0.6cm] (v1) at (5,1.5) {$V_1$};
+            \node[rectangle, draw, fill=green!20, minimum width=1cm, minimum height=0.6cm] (v2) at (5,0.5) {$V_2$};
+            \node[rectangle, draw, fill=green!20, minimum width=1cm, minimum height=0.6cm] (v3) at (5,-0.5) {$V_3$};
+            \node[rectangle, draw, fill=green!20, minimum width=1cm, minimum height=0.6cm] (v4) at (5,-1.5) {$V_4$};
+            
+            % Connections Q to K
+            \draw[->, thick, opacity=0.3] (q) -- (k1);
+            \draw[->, thick, opacity=0.8, red] (q) -- (k2);
+            \draw[->, thick, opacity=0.2] (q) -- (k3);
+            \draw[->, thick, opacity=0.4] (q) -- (k4);
+            
+            % K to V
+            \foreach \i in {1,2,3,4} {
+                \draw[-, dashed, gray] (k\i) -- (v\i);
+            }
+        \end{tikzpicture}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \textbf{Proceso:} Comparar Query con cada Key $\rightarrow$ obtener pesos $\rightarrow$ promediar Values
+\end{frame}
+
+\begin{frame}{El Cálculo de Atención (Simplificado)}
+    \centering
+    \begin{tikzpicture}[scale=0.75, transform shape]
+        % Step 1: Scores
+        \node[font=\small\bfseries] at (0,3) {Paso 1: Calcular scores};
+        \node[rectangle, draw, fill=red!20] (q) at (0,2) {Q};
+        \node at (1,2) {$\cdot$};
+        \node[rectangle, draw, fill=blue!20] (k) at (2,2) {$K^T$};
+        \node at (3,2) {$=$};
+        \node[rectangle, draw, fill=purple!20] (scores) at (4.5,2) {scores};
+        
+        % Step 2: Softmax
+        \node[font=\small\bfseries] at (8,3) {Paso 2: Normalizar};
+        \node[rectangle, draw, fill=purple!20] (s2) at (7,2) {scores};
+        \node at (8.2,2) {$\xrightarrow{\text{softmax}}$};
+        \node[rectangle, draw, fill=orange!20] (weights) at (10,2) {pesos $\alpha$};
+        
+        % Step 3: Weighted sum
+        \node[font=\small\bfseries] at (5,0.5) {Paso 3: Suma ponderada};
+        \node[rectangle, draw, fill=orange!20] (w) at (3,-0.5) {$\alpha$};
+        \node at (4,-0.5) {$\cdot$};
+        \node[rectangle, draw, fill=green!20] (v) at (5,-0.5) {V};
+        \node at (6,-0.5) {$=$};
+        \node[rectangle, draw, fill=yellow!30] (out) at (7.5,-0.5) {Salida};
+    \end{tikzpicture}
+    
+    \vspace{0.5cm}
+    \[
+    \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V
+    \]
+    
+    \vspace{0.2cm}
+    \begin{exampleblock}{Nota}
+        El $\sqrt{d_k}$ es un factor de escala para estabilizar los gradientes. $d_k$ es la dimensión de los vectores.
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Ejemplo Numérico Simple}
+    \textbf{Supongamos vectores de 2 dimensiones:}
+    
+    \vspace{0.3cm}
+    \begin{columns}
+        \column{0.48\textwidth}
+        \textbf{Entrada:}
+        \begin{itemize}
+            \item Query: $Q = [1, 0]$ (buscando)
+            \item Keys: $K_1 = [1, 0]$, $K_2 = [0, 1]$
+            \item Values: $V_1 = [10, 0]$, $V_2 = [0, 10]$
+        \end{itemize}
+        
+        \column{0.48\textwidth}
+        \textbf{Cálculo:}
+        \begin{itemize}
+            \item Score$_1 = Q \cdot K_1 = 1$
+            \item Score$_2 = Q \cdot K_2 = 0$
+            \item Softmax: $\alpha_1 \approx 0.73$, $\alpha_2 \approx 0.27$
+        \end{itemize}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \textbf{Resultado:}
+    \[
+    \text{Output} = 0.73 \times [10, 0] + 0.27 \times [0, 10] = [7.3, 2.7]
+    \]
+    
+    \vspace{0.2cm}
+    \begin{block}{Interpretación}
+        El Query ``se parecía más'' a $K_1$, así que la salida está dominada por $V_1$.
+    \end{block}
+\end{frame}
+
+\begin{frame}{Visualización: Matriz de Atención}
+    \centering
+    \begin{tikzpicture}[scale=0.8]
+        % Matrix
+        \draw[step=0.8cm, gray, thin] (0,0) grid (4.8,4);
+        
+        % Row labels (target)
+        \node[font=\tiny] at (-0.5,3.6) {El};
+        \node[font=\tiny] at (-0.5,2.8) {gato};
+        \node[font=\tiny] at (-0.5,2) {negro};
+        \node[font=\tiny] at (-0.5,1.2) {duerme};
+        \node[font=\tiny] at (-0.5,0.4) {.};
+        
+        % Column labels (source)
+        \node[font=\tiny] at (0.4,4.4) {The};
+        \node[font=\tiny] at (1.2,4.4) {black};
+        \node[font=\tiny] at (2,4.4) {cat};
+        \node[font=\tiny] at (2.8,4.4) {sleeps};
+        \node[font=\tiny] at (3.6,4.4) {.};
+        \node[font=\tiny] at (4.4,4.4) {EOS};
+        
+        % Attention weights (darker = higher)
+        % Row 1: El -> The
+        \fill[blue, opacity=0.8] (0,3.2) rectangle (0.8,4);
+        \fill[blue, opacity=0.1] (0.8,3.2) rectangle (1.6,4);
+        \fill[blue, opacity=0.1] (1.6,3.2) rectangle (2.4,4);
+        
+        % Row 2: gato -> cat
+        \fill[blue, opacity=0.1] (0,2.4) rectangle (0.8,3.2);
+        \fill[blue, opacity=0.2] (0.8,2.4) rectangle (1.6,3.2);
+        \fill[blue, opacity=0.9] (1.6,2.4) rectangle (2.4,3.2);
+        
+        % Row 3: negro -> black
+        \fill[blue, opacity=0.1] (0,1.6) rectangle (0.8,2.4);
+        \fill[blue, opacity=0.9] (0.8,1.6) rectangle (1.6,2.4);
+        \fill[blue, opacity=0.1] (1.6,1.6) rectangle (2.4,2.4);
+        
+        % Row 4: duerme -> sleeps
+        \fill[blue, opacity=0.1] (1.6,0.8) rectangle (2.4,1.6);
+        \fill[blue, opacity=0.85] (2.4,0.8) rectangle (3.2,1.6);
+        
+        % Row 5: . -> .
+        \fill[blue, opacity=0.9] (3.2,0) rectangle (4,0.8);
+        
+        % Labels
+        \node[font=\scriptsize, rotate=90] at (-1.5,2) {Salida (español)};
+        \node[font=\scriptsize] at (2.4,5) {Entrada (inglés)};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    Cada fila muestra ``a qué palabras de entrada atiende'' cada palabra de salida.
+\end{frame}
+
+%===========================================================
+% SECCIÓN 4: EVOLUCIÓN
+%===========================================================
+\section{Evolución del Mecanismo de Atención}
+
+\begin{frame}{Tipos de Atención}
+    \begin{columns}[t]
+        \column{0.32\textwidth}
+        \begin{block}{Bahdanau (2014)}
+            \textbf{Additive Attention}
+            \[
+            e_{ij} = v^T \tanh(W_1 h_i + W_2 s_j)
+            \]
+            \begin{itemize}
+                \item Usa una red neuronal
+                \item Más parámetros
+                \item Primera propuesta
+            \end{itemize}
+        \end{block}
+        
+        \column{0.32\textwidth}
+        \begin{block}{Luong (2015)}
+            \textbf{Multiplicative Attention}
+            \[
+            e_{ij} = h_i^T W s_j
+            \]
+            \begin{itemize}
+                \item Producto punto con matriz
+                \item Más eficiente
+                \item Varias variantes
+            \end{itemize}
+        \end{block}
+        
+        \column{0.32\textwidth}
+        \begin{block}{Scaled Dot-Product}
+            \textbf{(Transformer, 2017)}
+            \[
+            e_{ij} = \frac{q_i \cdot k_j}{\sqrt{d_k}}
+            \]
+            \begin{itemize}
+                \item Solo producto punto
+                \item Muy rápido
+                \item Escalable
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    
+    \vspace{0.4cm}
+    \begin{exampleblock}{Tendencia}
+        La evolución fue hacia mecanismos más simples y eficientes computacionalmente.
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{De Atención como Complemento a Atención como Base}
+    \centering
+    \begin{tikzpicture}[scale=0.85, transform shape]
+        % 2014-2016: Attention + RNN
+        \node[font=\small\bfseries] at (0,3) {2014-2016};
+        \draw[thick, rounded corners, fill=yellow!20] (-1.5,0) rectangle (1.5,2.5);
+        \node at (0,2) {RNN/LSTM};
+        \draw[thick, rounded corners, fill=red!20] (-1,0.5) rectangle (1,1.5);
+        \node[font=\scriptsize] at (0,1) {+ Atención};
+        \node[below, font=\tiny, text width=3cm, align=center] at (0,-0.3) {Atención como\\``complemento''};
+        
+        % Arrow
+        \node at (3,1.25) {\faArrowRight};
+        
+        % 2017+: Only Attention
+        \node[font=\small\bfseries] at (6,3) {2017+};
+        \draw[thick, rounded corners, fill=red!30] (4.5,0) rectangle (7.5,2.5);
+        \node at (6,1.25) {\textbf{Solo Atención}};
+        \node[below, font=\tiny, text width=3cm, align=center] at (6,-0.3) {Atención es todo\\lo que necesitas};
+        
+        % Paper referencea
+        \node[font=\scriptsize, text width=4cm, align=center] at (6,-1.2) {``Attention Is All You Need''\\Vaswani et al., 2017};
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{El Paper que Cambió Todo (2017)}
+    \begin{columns}
+        \column{0.55\textwidth}
+        \begin{block}{``Attention Is All You Need''}
+            Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, Polosukhin\\
+            \textit{Google Brain / Google Research, 2017}
+        \end{block}
+        
+        \vspace{0.3cm}
+        \textbf{Propuesta radical:}
+        \begin{itemize}
+            \item Eliminar RNNs completamente
+            \item Usar \textbf{solo} mecanismos de atención
+            \item Arquitectura: \textbf{Transformer}
+            \item Paralelización completa
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}[scale=0.7]
+            % Citation count
+            \draw[->] (0,0) -- (5,0) node[right, font=\tiny] {Año};
+            \draw[->] (0,0) -- (0,4.5) node[above, font=\tiny] {Citas};
+            
+            \draw[thick, blue] (0.5,0.1) -- (1,0.3) -- (1.5,0.8) -- (2,1.5) -- (2.5,2.5) -- (3,3.5) -- (3.5,4);
+            
+            \node[font=\tiny] at (0.5,-0.4) {2017};
+            \node[font=\tiny] at (2,-0.4) {2020};
+            \node[font=\tiny] at (3.5,-0.4) {2024};
+            
+            \node[font=\tiny] at (4,4.2) {140,000+};
+        \end{tikzpicture}
+        
+        \vspace{0.2cm}
+        \scriptsize Uno de los papers más citados en la historia de CS
+    \end{columns}
+\end{frame}
+
+\begin{frame}{¿Por Qué Fue Tan Importante?}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Problemas que Resolvió}
+            \begin{itemize}
+                \item[\faCheck] Paralelización total (no secuencial)
+                \item[\faCheck] Dependencias de cualquier distancia
+                \item[\faCheck] Contexto dinámico para cada posición
+                \item[\faCheck] Entrenamiento mucho más rápido
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Lo que Habilitó}
+            \begin{itemize}
+                \item BERT (2018)
+                \item GPT (2018)
+                \item GPT-2, GPT-3, GPT-4
+                \item Claude, Gemini, Llama
+                \item Toda la era de LLMs
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    
+    \vspace{0.4cm}
+    \begin{alertblock}{Impacto}
+        Sin el Transformer, no existirían ChatGPT ni ninguno de los LLMs modernos. El mecanismo de atención fue la clave.
+    \end{alertblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 5: SELF-ATTENTION
+%===========================================================
+\section{Self-Attention: La Clave del Transformer}
+
+\begin{frame}{Cross-Attention vs Self-Attention}
+    \centering
+    \begin{tikzpicture}[scale=0.8, transform shape]
+        % Cross-Attention
+        \begin{scope}[xshift=0cm]
+            \node[font=\small\bfseries] at (1.5,3.5) {Cross-Attention};
+            
+            % Source
+            \foreach \i in {0,1,2} {
+                \node[circle, draw, fill=blue!20, minimum size=0.6cm, font=\tiny] (s\i) at (\i,2) {$h_\i$};
+            }
+            \node[font=\tiny] at (1,2.6) {Encoder};
+            
+            % Target
+            \foreach \i in {0,1,2} {
+                \node[circle, draw, fill=green!20, minimum size=0.6cm, font=\tiny] (t\i) at (\i,0) {$s_\i$};
+            }
+            \node[font=\tiny] at (1,-0.6) {Decoder};
+            
+            % Connections
+            \foreach \i in {0,1,2} {
+                \foreach \j in {0,1,2} {
+                    \draw[->, gray, thin] (s\i) -- (t\j);
+                }
+            }
+            
+            \node[font=\tiny, text width=3cm, align=center] at (1,-1.5) {Atender de una secuencia a otra};
+        \end{scope}
+        
+        % Self-Attention
+        \begin{scope}[xshift=7cm]
+            \node[font=\small\bfseries] at (1.5,3.5) {Self-Attention};
+            
+            % Single sequence
+            \foreach \i in {0,1,2} {
+                \node[circle, draw, fill=purple!20, minimum size=0.6cm, font=\tiny] (x\i) at (\i,1) {$x_\i$};
+            }
+            \node[font=\tiny] at (1,1.7) {Misma secuencia};
+            
+            % Self connections
+            \draw[->, thick, red, bend left=30] (x0) to (x1);
+            \draw[->, thick, red, bend left=30] (x0) to (x2);
+            \draw[->, thick, red, bend left=30] (x1) to (x0);
+            \draw[->, thick, red, bend left=30] (x1) to (x2);
+            \draw[->, thick, red, bend left=30] (x2) to (x0);
+            \draw[->, thick, red, bend left=30] (x2) to (x1);
+            
+            % Self loops
+            \draw[->, thick, red] (x0) to [loop above] (x0);
+            \draw[->, thick, red] (x1) to [loop above] (x1);
+            \draw[->, thick, red] (x2) to [loop above] (x2);
+            
+            \node[font=\tiny, text width=3cm, align=center] at (1,-0.8) {Cada posición atiende a todas (incluyéndose)};
+        \end{scope}
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Self-Attention: Cada Palabra ``Mira'' a Todas}
+    \centering
+    \begin{tikzpicture}[scale=0.9]
+        % Sentence
+        \node (w1) at (0,0) {El};
+        \node (w2) at (1.5,0) {gato};
+        \node (w3) at (3,0) {negro};
+        \node (w4) at (4.5,0) {duerme};
+        \node (w5) at (6.5,0) {tranquilo};
+        
+        % Attention from "negro"
+        \node[above=0.3cm of w3, font=\scriptsize, red] {¿A quién atiendo?};
+        
+        \draw[->, thick, opacity=0.2] (w3) to [bend left=40] (w1);
+        \draw[->, thick, opacity=0.9, red] (w3) to [bend left=40] (w2);
+        \draw[->, thick, opacity=0.5] (w3) to [loop above] (w3);
+        \draw[->, thick, opacity=0.3] (w3) to [bend right=40] (w4);
+        \draw[->, thick, opacity=0.2] (w3) to [bend right=40] (w5);
+        
+        % Interpretation
+        \node[below=1cm of w3, font=\scriptsize, text width=8cm, align=center] {
+            ``negro'' atiende principalmente a ``gato'' porque es el sustantivo que modifica.\\
+            El modelo \textbf{aprende} estas relaciones durante el entrenamiento.
+        };
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{exampleblock}{Próximas Clases}
+        En la \textbf{Clase 13} veremos la arquitectura completa del Transformer, y en la \textbf{Clase 14} profundizaremos en Self-Attention y Multi-Head Attention.
+    \end{exampleblock}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 6: RESUMEN
+%===========================================================
+\section{Resumen y Ejercicios}
+
+\begin{frame}{Línea de Tiempo: Del RNN al Transformer}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.2}
+        \scriptsize
+        \begin{tabular}{p{1.5cm} p{4cm} p{6.5cm}}
+            \toprule
+            \textbf{Año} & \textbf{Hito} & \textbf{Significado} \\
+            \midrule
+            1997 & LSTM & Memoria a largo plazo en RNNs \\
+            2014 & Seq2Seq & Encoder-Decoder para traducción \\
+            2014 & Bahdanau Attention & Primer mecanismo de atención neural \\
+            2015 & Luong Attention & Variantes más eficientes \\
+            2017 & Transformer & ``Attention Is All You Need'' \\
+            2018 & BERT & Transformer bidireccional (encoder) \\
+            2018 & GPT & Transformer autoregresivo (decoder) \\
+            2020+ & GPT-3, etc. & Era de los LLMs masivos \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\begin{frame}{Conceptos Clave de Hoy}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \begin{block}{Problemas de RNNs}
+            \begin{itemize}
+                \item Procesamiento secuencial (lento)
+                \item Vector de contexto fijo
+                \item Dependencias a larga distancia
+            \end{itemize}
+        \end{block}
+        
+        \begin{block}{Solución: Atención}
+            \begin{itemize}
+                \item Contexto dinámico
+                \item Conexión directa a cualquier posición
+                \item Pesos aprendidos
+            \end{itemize}
+        \end{block}
+        
+        \column{0.48\textwidth}
+        \begin{block}{Fórmula Central}
+            \[
+            \text{Attn}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d}}\right)V
+            \]
+        \end{block}
+        
+        \begin{block}{Impacto}
+            \begin{itemize}
+                \item Habilitó el Transformer
+                \item Base de todos los LLMs
+                \item Revolucionó NLP y más allá
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Ejercicios Propuestos}
+    \begin{enumerate}
+        \setlength\itemsep{0.6em}
+        \item \textbf{Cálculo manual:} Dados $Q=[1,0]$, $K_1=[0.5, 0.5]$, $K_2=[1, 0]$, $V_1=[10, 0]$, $V_2=[0, 10]$, calcular la salida de atención (sin el factor de escala).
+        
+        \item \textbf{Lectura:} Leer el abstract y la introducción del paper ``Attention Is All You Need''. Identificar los 3 problemas principales que mencionan sobre RNNs.
+        
+        \item \textbf{Visualización:} Usar la herramienta BertViz (\texttt{github.com/jessevig/bertviz}) para visualizar patrones de atención en un modelo pre-entrenado.
+        
+        \item \textbf{Reflexión:} ¿Por qué crees que se llama ``Self''-Attention? ¿Qué diferencia hay con la atención de Bahdanau?
+        
+        \item \textbf{(Bonus)} Implementar atención básica en NumPy: función que reciba Q, K, V y devuelva el resultado.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Recursos Adicionales}
+    \textbf{Papers fundamentales:}
+    \begin{itemize}
+        \item Bahdanau et al., ``Neural Machine Translation by Jointly Learning to Align and Translate'' (2014)
+        \item Vaswani et al., ``Attention Is All You Need'' (2017)
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Visualizaciones interactivas:}
+    \begin{itemize}
+        \item Jay Alammar: ``The Illustrated Transformer''
+        \item 3Blue1Brown: ``Attention in Transformers''
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \textbf{Próximas clases:}
+    \begin{itemize}
+        \item Clase 13: Arquitectura Transformer completa
+        \item Clase 14: Self-Attention en detalle matemático
+    \end{itemize}
+\end{frame}
+
+%--- Diapositiva Final ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.8cm}
+    \large
+    \textbf{Próxima clase:} Arquitectura Transformer: Visión General Encoder-Decoder
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textit{``Attention is all you need.''\\--- Vaswani et al., 2017}
+\end{frame}
+
+\end{document}

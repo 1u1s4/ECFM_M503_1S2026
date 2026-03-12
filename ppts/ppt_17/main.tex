@@ -1,0 +1,306 @@
+\documentclass[aspectratio=169]{beamer}
+%--- Configuración del Tema y Colores ---
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+%--- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, decorations.pathreplacing, trees}
+%--- Configuración de Listings ---
+\lstdefinestyle{codestyle}{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    columns=fullflexible,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{red!70!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=5pt
+}
+\lstdefinestyle{cppstyle}{
+    style=codestyle,
+    language=C++,
+    morekeywords={vector, string, pair, set, map, queue, stack, priority_queue, unordered_map, unordered_set, deque, push_back, pop_back, emplace_back, begin, end, size, empty, front, back, top, insert, erase, find, count, lower_bound, upper_bound, auto}
+}
+\lstdefinestyle{pythonstyle}{
+    style=codestyle,
+    language=Python,
+    morekeywords={def, return, for, in, range, if, else, elif, while, True, False, None, print, input, int, str, list, dict, set, append, pop, len, sorted, map, filter}
+}
+\lstdefinestyle{pseudostyle}{
+    basicstyle=\ttfamily\scriptsize,
+    backgroundcolor=\color{blue!5},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    columns=fullflexible,
+    mathescape=true
+}
+%--- Metadatos del Documento ---
+\title[PM2 - Clase 21]{Programación Matemática 2}
+\subtitle{Clase 21: Programación Competitiva --- Introducción y Estructuras de Datos Básicas}
+\author[Luis Alfredo Alvarado]{Prof. Luis Alfredo Alvarado Rodríguez}
+\institute[ECFM - USAC]{
+    Escuela de Ciencias Físicas y Matemáticas \\
+    Universidad de San Carlos de Guatemala
+}
+\date{Primer Semestre, 2026}
+\begin{document}
+%--- 1. Diapositiva de Título ---
+\begin{frame}
+    \titlepage
+\end{frame}
+%--- 2. Tabla de Contenidos ---
+\begin{frame}{Agenda de Hoy}
+    \tableofcontents
+\end{frame}
+%===========================================================
+% SECCIÓN 1: INTRODUCCIÓN
+%===========================================================
+\section{¿Qué es la Programación Competitiva?}
+%--- 3 ---
+\begin{frame}{Contexto: ¿Por Qué Algoritmos en un Curso de IA?}
+    \textbf{En las unidades anteriores aprendimos a:}
+    \begin{itemize}
+        \item Usar LLMs para generar código y resolver problemas
+        \item Diseñar prompts, conectar APIs, construir agentes
+    \end{itemize}
+    
+    \vspace{0.3cm}
+    \begin{block}{La Nueva Pregunta}
+        Un LLM puede generar código\ldots\ pero ¿genera código \textbf{óptimo}? ¿Cómo sabemos si una solución es buena o si hay una 1000$\times$ más rápida?
+    \end{block}
+    
+    \vspace{0.3cm}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \textbf{Razones técnicas:}
+        \begin{itemize}
+            \item Evaluar eficiencia del código generado
+            \item Optimizar pipelines de datos
+            \item Los LLMs aún fallan en CP difícil
+        \end{itemize}
+        
+        \column{0.48\textwidth}
+        \textbf{Razones profesionales:}
+        \begin{itemize}
+            \item Entrevistas de FAANG usan CP
+            \item Benchmark de IA (AlphaCode, o3)
+            \item Pensamiento lógico riguroso
+        \end{itemize}
+    \end{columns}
+\end{frame}
+%--- 4 ---
+\begin{frame}{Definición y Ecosistema}
+    \begin{block}{Definición}
+        La \textbf{Programación Competitiva} (CP) es una disciplina donde se resuelven problemas algorítmicos bien definidos bajo restricciones de \textbf{tiempo} y \textbf{memoria}, buscando soluciones correctas y eficientes.
+    \end{block}
+    
+    \vspace{0.3cm}
+    \textbf{Breve historia:}
+    \begin{itemize}
+        \item \textbf{1977:} Nace la ACM-ICPC (hoy ICPC) --- competencia universitaria más prestigiosa
+        \item \textbf{1989:} Inicia la IOI (Olimpiada Internacional de Informática)
+        \item \textbf{2000s:} Plataformas online: Codeforces, TopCoder, LeetCode, AtCoder
+        \item \textbf{2020s:} LLMs compiten --- AlphaCode (2022), o3 rating $\sim$1800+ en Codeforces
+    \end{itemize}
+    
+    \vspace{0.2cm}
+    \begin{exampleblock}{Plataformas clave}
+        \textbf{Codeforces} (contests semanales), \textbf{LeetCode} (entrevistas), \textbf{CSES} (300 problemas clásicos), \textbf{AtCoder} (comunidad JP)
+    \end{exampleblock}
+\end{frame}
+%--- 5 ---
+\begin{frame}{Anatomía de un Problema de CP}
+    \centering
+    \begin{tikzpicture}[scale=0.85, transform shape]
+        \tikzset{
+            component/.style={rectangle, rounded corners, minimum width=10cm, minimum height=0.9cm, draw, font=\scriptsize, align=left}
+        }
+        
+        \node[component, fill=red!20] (title) at (0,3) {\textbf{Nombre del Problema:} Título descriptivo + ID};
+        \node[component, fill=blue!20] (desc) at (0,1.8) {\textbf{Enunciado:} Descripción narrativa del problema a resolver};
+        \node[component, fill=yellow!20] (input) at (0,0.6) {\textbf{Formato de Entrada:} Especificación exacta de cómo se reciben los datos};
+        \node[component, fill=green!20] (output) at (0,-0.6) {\textbf{Formato de Salida:} Especificación exacta de lo que se debe imprimir};
+        \node[component, fill=purple!20] (limits) at (0,-1.8) {\textbf{Restricciones:} $1 \leq n \leq 10^5$, tiempo: 2s, memoria: 256 MB};
+        \node[component, fill=orange!20] (examples) at (0,-3) {\textbf{Casos de Ejemplo:} Pares entrada/salida para verificar comprensión};
+        
+        \draw[decorate, decoration={brace, amplitude=5pt}] (5.5,-1.4) -- (5.5,-3.4) node[midway, right=0.3cm, font=\tiny, text width=2.5cm] {Claves para elegir\\el algoritmo};
+    \end{tikzpicture}
+\end{frame}
+%--- 6 ---
+\begin{frame}[fragile]{Ejemplo: Un Problema Clásico}
+    \begin{block}{Problema: Suma de Pares}
+        Dado un arreglo de $n$ enteros y un valor objetivo $k$, determinar si existen dos elementos cuya suma sea exactamente $k$.
+    \end{block}
+    
+    \begin{columns}
+        \column{0.45\textwidth}
+        \textbf{Entrada:}
+\begin{lstlisting}[style=pseudostyle]
+5 9
+2 7 11 15 1
+\end{lstlisting}
+        \textit{$n=5$, $k=9$, arreglo: [2, 7, 11, 15, 1]}
+        
+        \vspace{0.2cm}
+        \textbf{Salida:}
+\begin{lstlisting}[style=pseudostyle]
+YES
+\end{lstlisting}
+        \textit{Porque $2 + 7 = 9$}
+        
+        \column{0.50\textwidth}
+        \textbf{¿Cómo lo resolverías?}
+        \begin{itemize}
+            \item \textbf{Fuerza bruta:} Todos los pares $\rightarrow O(n^2)$
+            \item \textbf{Ordenar + dos punteros:} $\rightarrow O(n \log n)$
+            \item \textbf{Hash set:} $\rightarrow O(n)$
+        \end{itemize}
+        
+        \vspace{0.2cm}
+        La \textbf{elección de la estructura de datos} determina la eficiencia. Veremos las tres soluciones en esta clase.
+    \end{columns}
+\end{frame}
+%===========================================================
+% SECCIÓN 2: SETUP
+%===========================================================
+\section{Setup: Lenguaje y Plantilla Base}
+%--- 7 ---
+\begin{frame}{Lenguajes Populares en CP}
+    \begin{table}[]
+        \centering
+        \renewcommand{\arraystretch}{1.3}
+        \scriptsize
+        \begin{tabular}{p{2cm} p{3.5cm} p{3.5cm} p{2.5cm}}
+            \toprule
+            \textbf{Lenguaje} & \textbf{Ventajas} & \textbf{Desventajas} & \textbf{Uso en CP} \\
+            \midrule
+            \textbf{C++} & Rápido, STL poderoso & Verbose, errores crípticos & $\sim$80\% competidores \\
+            \textbf{Python} & Legible, prototipado rápido & Lento ($\sim$50x más que C++) & Problemas sin TLE \\
+            \textbf{Java} & Robusto, BigInteger & Verbose, más lento que C++ & $\sim$10\% competidores \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \vspace{0.2cm}
+    \begin{block}{Recomendación para este curso}
+        Usaremos \textbf{C++} como lenguaje principal (estándar en competencias) y \textbf{Python} para prototipado rápido y verificación.
+    \end{block}
+\end{frame}
+
+%===========================================================
+% SECCIÓN 3: ARREGLOS Y STRINGS
+%===========================================================
+\section{Arreglos, Strings y Técnicas Clave}
+%--- 9 ---
+\begin{frame}{Arreglos (Arrays)}
+    \begin{block}{Definición}
+        Secuencia contigua de elementos del mismo tipo, accesibles por índice en $O(1)$.
+    \end{block}
+    
+    \centering
+    \begin{tikzpicture}[scale=0.9]
+        \foreach \i/\v in {0/3, 1/7, 2/1, 3/9, 4/4, 5/2, 6/8, 7/5} {
+            \draw[fill=blue!20] (\i*1.2, 0) rectangle (\i*1.2+1, 0.8);
+            \node at (\i*1.2+0.5, 0.4) {\textbf{\v}};
+            \node[font=\tiny, gray] at (\i*1.2+0.5, -0.3) {\i};
+        }
+        \node[font=\scriptsize, left] at (-0.3, 0.4) {valor};
+        \node[font=\scriptsize, left, gray] at (-0.3, -0.3) {índice};
+    \end{tikzpicture}
+    
+    \vspace{0.3cm}
+    \begin{table}[]
+        \centering
+        \scriptsize
+        \renewcommand{\arraystretch}{1.2}
+        \begin{tabular}{l c l}
+            \toprule
+            \textbf{Operación} & \textbf{Complejidad} & \textbf{Nota} \\
+            \midrule
+            Acceso por índice & $O(1)$ & Lo mejor de arreglos \\
+            Búsqueda (sin orden) & $O(n)$ & Recorrido lineal \\
+            Búsqueda (ordenado) & $O(\log n)$ & Búsqueda binaria \\
+            Inserción al final & $O(1)$ amortizado & \texttt{push\_back} en C++ \\
+            Inserción en medio & $O(n)$ & Requiere desplazar elementos \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+%--- 12 ---
+\begin{frame}[fragile]{Strings: Operaciones Esenciales}
+    Los strings son arreglos de caracteres con operaciones especiales.
+    
+    \begin{columns}
+        \column{0.48\textwidth}
+        \textbf{Operaciones frecuentes en CP:}
+        \begin{itemize}
+            \item Comparación lexicográfica
+            \item Búsqueda de subcadena
+            \item Palíndromos
+            \item Conteo de frecuencias
+        \end{itemize}
+        
+        \vspace{0.2cm}
+        \begin{alertblock}{Cuidado}
+            Concatenar strings en un ciclo es $O(n^2)$. Usar \texttt{stringstream} (C++) o \texttt{join} (Python).
+        \end{alertblock}
+        
+        \column{0.48\textwidth}
+\begin{lstlisting}[style=cppstyle, numbers=none]
+string s = "abracadabra";
+
+// Frecuencia de caracteres
+int freq[26] = {};
+for(char c : s)
+    freq[c - 'a']++;
+
+// Verificar palindromo
+bool esPalin(string &s){
+    int n = s.size();
+    for(int i = 0; i < n/2; i++)
+        if(s[i] != s[n-1-i])
+            return false;
+    return true;
+}
+\end{lstlisting}
+    \end{columns}
+\end{frame}
+
+%--- 19 ---
+\begin{frame}
+    \centering
+    \Huge \textbf{¿Preguntas?}
+    
+    \vspace{0.5cm}
+    \normalsize
+    Prof. Luis Alfredo Alvarado Rodríguez\\
+    \small Escuela de Ciencias Físicas y Matemáticas
+    
+    \vspace{0.5cm}
+    \footnotesize
+    \textbf{Ejercicios:} Two Sum (LeetCode \#1), Valid Parentheses (LeetCode \#20),\\
+    Range Sum Query (LeetCode \#303), CSES Missing Number\\[0.3cm]
+    \textbf{Recursos:} Laaksonen, \textit{Competitive Programmer's Handbook} (gratis online)\\
+    Halim \& Halim, \textit{Competitive Programming 4}
+    
+    \vspace{0.3cm}
+    \scriptsize
+    \textit{``First, solve the problem. Then, write the code.''\\--- John Johnson}
+\end{frame}
+\end{document}
