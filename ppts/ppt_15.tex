@@ -220,44 +220,6 @@
     \end{columns}
 \end{frame}
 
-\begin{comment}
-\begin{frame}{El Cuello de Botella de las RNNs}
-    \centering
-    \begin{tikzpicture}[scale=0.85]
-        \tikzset{
-            box/.style={rectangle, rounded corners, draw, minimum width=1.5cm, minimum height=0.7cm, font=\scriptsize, align=center}
-        }
-        
-        % Sequential processing illustration
-        \node[box, fill=blue!20] (w1) at (0,0) {Hola};
-        \node[box, fill=blue!20] (w2) at (2,0) {mundo};
-        \node[box, fill=blue!20] (w3) at (4,0) {cruel};
-        \node[box, fill=blue!20] (w4) at (6,0) {y};
-        \node[box, fill=blue!20] (w5) at (8,0) {hermoso};
-        
-        \draw[->, thick] (w1) -- (w2);
-        \draw[->, thick] (w2) -- (w3);
-        \draw[->, thick] (w3) -- (w4);
-        \draw[->, thick] (w4) -- (w5);
-        
-        \foreach \i in {1,...,5} {
-            \node[above=0.3cm of w\i, font=\tiny, gray] {$t=\i$};
-        }
-        
-        \node[below=0.8cm, font=\scriptsize, text width=10cm, align=center] at (4,-0.2) {
-            \textbf{Problema 1:} Cada palabra debe esperar a la anterior $\rightarrow$ no se puede paralelizar en GPU
-        };
-        
-        % Bottleneck
-        \node[box, fill=red!30] (bottle) at (4,-2.5) {Vector $h_T$};
-        \draw[->, thick, red] (w5.south) -- ++(0,-0.5) -| (bottle.north);
-        \node[below=0.3cm of bottle, font=\scriptsize, text width=8cm, align=center] {
-            \textbf{Problema 2:} Toda la oración se comprime en UN solo vector de tamaño fijo
-        };
-    \end{tikzpicture}
-\end{frame}
-\end{comment}
-
 %===========================================================
 % SECCIÓN 3: SEQ2SEQ Y EL CUELLO DE BOTELLA
 %===========================================================
@@ -308,32 +270,6 @@
     \end{alertblock}
 \end{frame}
 
-\begin{comment}
-\begin{frame}{Evidencia del Problema}
-    \centering
-    \begin{tikzpicture}[scale=0.85]
-        % Axes
-        \draw[->, thick] (0,0) -- (9,0) node[right, font=\scriptsize] {Longitud de la oración};
-        \draw[->, thick] (0,0) -- (0,5) node[above, font=\scriptsize] {Calidad (BLEU score)};
-        
-        % Curve - Seq2Seq without attention
-        \draw[thick, red, smooth] plot coordinates {(0.5,4.2) (2,4) (3.5,3.5) (5,2.5) (6.5,1.5) (8,0.8)};
-        \node[red, font=\tiny, right] at (8, 0.8) {Seq2Seq};
-        
-        % Curve - with attention (preview)
-        \draw[thick, blue, dashed, smooth] plot coordinates {(0.5,4.3) (2,4.2) (3.5,4.1) (5,3.9) (6.5,3.7) (8,3.5)};
-        \node[blue, font=\tiny, right] at (8, 3.5) {Con Atención};
-        
-        % Annotation
-        \draw[<->, thick, orange] (7, 1.2) -- (7, 3.6);
-        \node[orange, font=\tiny, right] at (7.1, 2.4) {¡Gran diferencia!};
-    \end{tikzpicture}
-    
-    \vspace{0.3cm}
-    \textbf{Observación empírica:} La calidad de traducción de Seq2Seq \textbf{caía dramáticamente} con oraciones de más de 20 palabras. La solución necesitaba un mecanismo que pudiera ``mirar atrás'' selectivamente.
-\end{frame}
-\end{comment}
-
 %===========================================================
 % SECCIÓN 4: EL NACIMIENTO DE LA ATENCIÓN
 %===========================================================
@@ -358,56 +294,6 @@
         En lugar de comprimir toda la entrada en un vector fijo, permitir que el decoder \textbf{atienda selectivamente} a diferentes posiciones del encoder en cada paso de la generación.
     \end{exampleblock}
 \end{frame}
-\begin{comment}
-\begin{frame}{Atención de Bahdanau: Mecanismo}
-    \centering
-    \begin{tikzpicture}[scale=0.75, transform shape]
-        \tikzset{
-            enc/.style={rectangle, draw, fill=blue!20, minimum width=1cm, minimum height=0.7cm, font=\tiny},
-            dec/.style={rectangle, draw, fill=green!20, minimum width=1cm, minimum height=0.7cm, font=\tiny},
-            arrow/.style={->, >=stealth}
-        }
-        
-        % Encoder states
-        \node[enc] (h1) at (0,0) {$h_1$};
-        \node[enc] (h2) at (1.8,0) {$h_2$};
-        \node[enc] (h3) at (3.6,0) {$h_3$};
-        \node[enc] (h4) at (5.4,0) {$h_4$};
-        
-        \node[below=0.2cm of h1, font=\tiny] {Yo};
-        \node[below=0.2cm of h2, font=\tiny] {amo};
-        \node[below=0.2cm of h3, font=\tiny] {a};
-        \node[below=0.2cm of h4, font=\tiny] {Guate};
-        
-        % Decoder state
-        \node[dec] (s) at (2.7, 3.5) {$s_t$ (decoder)};
-        
-        % Attention weights
-        \draw[arrow, red!30, line width=1pt] (s.south) -- node[left, font=\tiny, red] {$\alpha_1$=0.1} (h1.north);
-        \draw[arrow, red!80, line width=3pt] (s.south) -- node[left, font=\tiny, red] {$\alpha_2$=0.7} (h2.north);
-        \draw[arrow, red!20, line width=0.8pt] (s.south) -- node[right, font=\tiny, red] {$\alpha_3$=0.05} (h3.north);
-        \draw[arrow, red!40, line width=1.5pt] (s.south) -- node[right, font=\tiny, red] {$\alpha_4$=0.15} (h4.north);
-        
-        % Context vector
-        \node[circle, draw, fill=orange!30, minimum size=0.8cm, font=\tiny] (c) at (7.5, 1.5) {$c_t$};
-        \draw[arrow, thick, orange] (h1.east) .. controls (6,0.5) .. (c.west);
-        \draw[arrow, thick, orange] (h2.east) .. controls (6,0.8) .. (c.west);
-        \draw[arrow, thick, orange] (h3.east) .. controls (6.5,1) .. (c.west);
-        \draw[arrow, thick, orange] (h4.east) .. controls (7,1) .. (c.west);
-        
-        % Output
-        \node[rectangle, draw, fill=purple!20, minimum width=1.2cm, minimum height=0.7cm, font=\tiny] (out) at (7.5, 3.5) {``love''};
-        \draw[arrow, thick] (c) -- (out);
-        \draw[arrow, thick, green!50!black] (s) -- (out);
-        
-        % Annotation
-        \node[font=\tiny, text width=3cm, align=center] at (9.5, 0) {Suma ponderada:\\$c_t = \sum_i \alpha_i h_i$};
-    \end{tikzpicture}
-    
-    \vspace{0.3cm}
-    \textbf{Clave:} Los pesos $\alpha_i$ son \textbf{dinámicos} --- cambian en cada paso del decoder. Cuando genera ``love'', atiende más a ``amo''.
-\end{frame}
-
 
 \begin{frame}{Las Matemáticas de la Atención (Bahdanau)}
     \textbf{Paso 1: Calcular scores de alineamiento}
@@ -430,111 +316,11 @@
     \end{equation*}
     Promedio ponderado de los estados del encoder, donde los pesos reflejan la ``atención''.
 \end{frame}
-\end{comment}
-
-\begin{comment}
-\begin{frame}{Visualizando la Atención: Matrices de Alineamiento}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \centering
-        \begin{tikzpicture}[scale=0.6]
-            % Grid
-            \def\words{{"I","love","Guate","<eos>"}}
-            \def\srcwords{{"Yo","amo","Guate","<eos>"}}
-            
-            % Column labels (source)
-            \node[font=\tiny, rotate=45, anchor=south west] at (0.5, 4.3) {Yo};
-            \node[font=\tiny, rotate=45, anchor=south west] at (1.5, 4.3) {amo};
-            \node[font=\tiny, rotate=45, anchor=south west] at (2.5, 4.3) {Guate};
-            \node[font=\tiny, rotate=45, anchor=south west] at (3.5, 4.3) {\textless eos\textgreater};
-            
-            % Row labels (target)
-            \node[font=\tiny, anchor=east] at (0, 3.5) {I};
-            \node[font=\tiny, anchor=east] at (0, 2.5) {love};
-            \node[font=\tiny, anchor=east] at (0, 1.5) {Guate};
-            \node[font=\tiny, anchor=east] at (0, 0.5) {\textless eos\textgreater};
-            
-            % Attention weights as colored cells
-            % Row 1: I
-            \fill[blue!70] (0,3) rectangle (1,4);
-            \fill[blue!10] (1,3) rectangle (2,4);
-            \fill[blue!5] (2,3) rectangle (3,4);
-            \fill[blue!5] (3,3) rectangle (4,4);
-            
-            % Row 2: love
-            \fill[blue!10] (0,2) rectangle (1,3);
-            \fill[blue!80] (1,2) rectangle (2,3);
-            \fill[blue!5] (2,2) rectangle (3,3);
-            \fill[blue!5] (3,2) rectangle (4,3);
-            
-            % Row 3: Guate
-            \fill[blue!5] (0,1) rectangle (1,2);
-            \fill[blue!5] (1,1) rectangle (2,2);
-            \fill[blue!75] (2,1) rectangle (3,2);
-            \fill[blue!10] (3,1) rectangle (4,2);
-            
-            % Row 4: <eos>
-            \fill[blue!5] (0,0) rectangle (1,1);
-            \fill[blue!5] (1,0) rectangle (2,1);
-            \fill[blue!10] (2,0) rectangle (3,1);
-            \fill[blue!60] (3,0) rectangle (4,1);
-            
-            % Grid lines
-            \draw[gray] (0,0) grid (4,4);
-            
-            \node[below=0.3cm, font=\tiny] at (2,0) {Fuente (encoder)};
-            \node[left=0.3cm, font=\tiny, rotate=90, anchor=south] at (0,2) {Destino (decoder)};
-        \end{tikzpicture}
-        
-        \column{0.5\textwidth}
-        \textbf{¿Qué vemos?}
-        \begin{itemize}
-            \item La diagonal fuerte indica \textbf{alineamiento monotónico} (típico en pares de idiomas similares)
-            \item Cada fila muestra dónde ``mira'' el decoder al generar esa palabra
-            \item Más oscuro = mayor peso de atención
-        \end{itemize}
-        
-        \vspace{0.3cm}
-        \begin{exampleblock}{Insight Clave}
-            La atención es \textbf{interpretable}: podemos ver qué aprendió el modelo. Esto fue revolucionario para entender redes neuronales.
-        \end{exampleblock}
-    \end{columns}
-\end{frame}
-\end{comment}
 
 %===========================================================
 % SECCIÓN 5: EVOLUCIÓN DE LA ATENCIÓN
 %===========================================================
 \section{Evolución del Mecanismo de Atención}
-
-\begin{comment}
-\begin{frame}{Luong Attention (2015): Simplificación}
-    \begin{block}{``Effective Approaches to Attention-based Neural Machine Translation'' (Luong et al., 2015)}
-        Propuso variantes más simples y eficientes del mecanismo de atención.
-    \end{block}
-    
-    \vspace{0.3cm}
-    \begin{table}[]
-        \centering
-        \renewcommand{\arraystretch}{1.3}
-        \scriptsize
-        \begin{tabular}{p{2.5cm} p{4.5cm} p{4.5cm}}
-            \toprule
-            \textbf{Aspecto} & \textbf{Bahdanau (2014)} & \textbf{Luong (2015)} \\
-            \midrule
-            Score function & $v^T \tanh(W[s;h])$ (aditiva) & $s^T W h$ (multiplicativa) \\
-            Dirección encoder & Bidireccional & Unidireccional \\
-            Estado usado & $s_{t-1}$ (paso anterior) & $s_t$ (paso actual) \\
-            Complejidad & Mayor & Menor \\
-            Variantes & Una & Global, Local \\
-            \bottomrule
-        \end{tabular}
-    \end{table}
-    
-    \vspace{0.3cm}
-    \textbf{Atención multiplicativa} de Luong: $\text{score}(s_t, h_j) = s_t^T W h_j$ --- más rápida de computar que la versión aditiva.
-\end{frame}
-\end{comment}
 
 \begin{frame}{Tipos de Atención: Taxonomía}
     \centering
@@ -722,49 +508,6 @@
 %===========================================================
 \section{Hacia el Transformer}
 
-\begin{comment}
-\begin{frame}{Multi-Head Attention: Atender a Múltiples Cosas}
-    \begin{block}{Problema}
-        Un solo mecanismo de atención captura UNA relación. Pero las palabras tienen múltiples relaciones simultáneas (sintáctica, semántica, referencial...).
-    \end{block}
-    
-    \centering
-    \begin{tikzpicture}[scale=0.75, transform shape]
-        \tikzset{
-            head/.style={rectangle, rounded corners, draw, minimum width=2cm, minimum height=0.6cm, font=\tiny, align=center}
-        }
-        
-        \node[head, fill=blue!20] (input) at (0, 0) {Input};
-        
-        \node[head, fill=red!20] (h1) at (4, 1.5) {Head 1: relaciones sintácticas};
-        \node[head, fill=green!20] (h2) at (4, 0.5) {Head 2: relaciones semánticas};
-        \node[head, fill=yellow!20] (h3) at (4, -0.5) {Head 3: correferencia};
-        \node[head, fill=purple!20] (h4) at (4, -1.5) {Head 4: posición relativa};
-        
-        \node[head, fill=orange!20] (concat) at (8, 0) {Concatenar + Proyectar};
-        \node[head, fill=blue!30] (out) at (12, 0) {Output};
-        
-        \draw[->, thick] (input) -- (h1);
-        \draw[->, thick] (input) -- (h2);
-        \draw[->, thick] (input) -- (h3);
-        \draw[->, thick] (input) -- (h4);
-        
-        \draw[->, thick] (h1) -- (concat);
-        \draw[->, thick] (h2) -- (concat);
-        \draw[->, thick] (h3) -- (concat);
-        \draw[->, thick] (h4) -- (concat);
-        
-        \draw[->, thick] (concat) -- (out);
-    \end{tikzpicture}
-    
-    \vspace{0.3cm}
-    \begin{equation*}
-        \text{MultiHead}(Q,K,V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)W^O
-    \end{equation*}
-    donde $\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$
-\end{frame}
-\end{comment}
-
 \begin{frame}{2017: ``Attention Is All You Need''}
     \begin{block}{El Paper que Definió una Era}
         Vaswani et al. (Google Brain, 2017) --- Propusieron el \textbf{Transformer}: una arquitectura basada \textbf{enteramente} en atención, sin recurrencia ni convoluciones.
@@ -866,36 +609,6 @@
     \end{columns}
 \end{frame}
 
-\begin{comment}
-\begin{frame}{Resumen de la Clase}
-    \begin{columns}[t]
-        \column{0.48\textwidth}
-        \textbf{Ideas Clave:}
-        \begin{enumerate}
-            \item Las RNNs/LSTMs procesan secuencias \textbf{secuencialmente} y sufren el cuello de botella del vector fijo
-            \item Bahdanau (2014) propuso que el decoder \textbf{atienda selectivamente} a posiciones del encoder
-            \item La atención produce pesos dinámicos: distribución de probabilidad sobre la entrada
-            \item Self-attention permite que cada token atienda a \textbf{todos} los demás directamente
-        \end{enumerate}
-        
-        \column{0.48\textwidth}
-        \textbf{Fórmula Central:}
-        \begin{equation*}
-            \text{Att}(Q,K,V) = \text{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right)\!V
-        \end{equation*}
-        
-        \vspace{0.3cm}
-        \textbf{Próxima Clase:}
-        \begin{itemize}
-            \item Clase 13: Arquitectura Transformer completa
-            \item Encoder-Decoder en detalle
-            \item Positional Encoding
-            \item De Transformers a GPT y BERT
-        \end{itemize}
-    \end{columns}
-\end{frame}
-
-\end{comment}
 %===========================================================
 % SECCIÓN 9: EJERCICIOS
 %===========================================================
