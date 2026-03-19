@@ -34,7 +34,7 @@ def encontrar_n_primo(objetivo: Int) -> Int:
 
 
 def main() raises:
-    var objetivo: Int = 1000001
+    var objetivo: Int = 10000001
 
     var inicio = perf_counter()
     var resultado = encontrar_n_primo(objetivo)
