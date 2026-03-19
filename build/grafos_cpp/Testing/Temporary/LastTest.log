@@ -1,0 +1,41 @@
+Start testing: Mar 19 08:52 CST
+----------------------------------------------------------
+1/2 Testing: graph_core_tests
+1/2 Test: graph_core_tests
+Command: "/Users/luisalvarado/Documents/GitHub/ECFM_M503_1S2026/build/grafos_cpp/graph_core_tests"
+Directory: /Users/luisalvarado/Documents/GitHub/ECFM_M503_1S2026/build/grafos_cpp
+"graph_core_tests" start time: Mar 19 08:52 CST
+Output:
+----------------------------------------------------------
+[PASS] GraphConfig
+[PASS] FactoryClamp
+[PASS] SingleVertex
+[PASS] ManualAlgorithms
+[PASS] RandomWalkRestart
+[PASS] Controller
+<end of output>
+Test time =   0.77 sec
+----------------------------------------------------------
+Test Passed.
+"graph_core_tests" end time: Mar 19 08:52 CST
+"graph_core_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/2 Testing: ui_smoke_tests
+2/2 Test: ui_smoke_tests
+Command: "/Users/luisalvarado/Documents/GitHub/ECFM_M503_1S2026/build/grafos_cpp/ui_smoke_tests"
+Directory: /Users/luisalvarado/Documents/GitHub/ECFM_M503_1S2026/build/grafos_cpp
+"ui_smoke_tests" start time: Mar 19 08:52 CST
+Output:
+----------------------------------------------------------
+qt.qpa.fonts: Populating font family aliases took 115 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+[PASS] ui_smoke_tests
+<end of output>
+Test time =   0.91 sec
+----------------------------------------------------------
+Test Passed.
+"ui_smoke_tests" end time: Mar 19 08:52 CST
+"ui_smoke_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Mar 19 08:52 CST

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libgrafos_ui.a CMakeFiles/grafos_ui.dir/grafos_ui_autogen/mocs_compilation.cpp.o CMakeFiles/grafos_ui.dir/src/styles.cpp.o CMakeFiles/grafos_ui.dir/src/widgets.cpp.o CMakeFiles/grafos_ui.dir/src/main_window.cpp.o
+/usr/bin/ranlib libgrafos_ui.a

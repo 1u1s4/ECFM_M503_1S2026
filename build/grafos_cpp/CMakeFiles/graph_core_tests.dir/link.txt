@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -mmacosx-version-min=14.0 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/graph_core_tests.dir/graph_core_tests_autogen/mocs_compilation.cpp.o CMakeFiles/graph_core_tests.dir/tests/test_core.cpp.o -o graph_core_tests  libgrafos_core.a

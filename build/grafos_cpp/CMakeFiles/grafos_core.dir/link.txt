@@ -1,0 +1,2 @@
+/usr/bin/ar qc libgrafos_core.a CMakeFiles/grafos_core.dir/src/domain.cpp.o CMakeFiles/grafos_core.dir/src/generator.cpp.o CMakeFiles/grafos_core.dir/src/algorithms.cpp.o CMakeFiles/grafos_core.dir/src/controller.cpp.o CMakeFiles/grafos_core.dir/src/device_detection.cpp.o
+/usr/bin/ranlib libgrafos_core.a
